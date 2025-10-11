@@ -15,7 +15,23 @@ Makes L: appear to the game as being a CDROM drive and its volume name as KOHAN_
 }
 ```
 
-## Can enable logging with:
+##Example 2 (Grand Theft Auto - Vice City)
+Here Vice City also checks some files off the CD. So you can map any files being searched for on the CD to the current directory:
+```json
+{
+	"exefile": "gta-vc.exe"
+	"logging": false,
+	"logfile": "version.log.txt",
+	"logCreatefile": true,
+	"CDRomDriveLetter": "L",
+	"fileMappings": [
+	{"source": "L:\\*", "target": ".\\*"}
+	],
+	"CPUCount": 1
+}
+```
+
+## Can just enable logging with:
 ```json
 {
   "logging": true,
