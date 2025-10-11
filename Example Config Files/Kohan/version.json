@@ -1,0 +1,7 @@
+{
+	"exeFile": "_AG.exe",
+	"CDROMDriveLetter": "L",
+	"CDROMVolumeName": "KOHAN_AG"
+	"logging": true,
+	"logFile": "version.log.txt"
+}
