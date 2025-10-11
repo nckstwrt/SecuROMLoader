@@ -13,6 +13,8 @@ Find out more here: [Example Config Files](https://github.com/nckstwrt/SecuROMLo
 
 ## Credits
 * ELF_7719116 - The mastermind behind unveiling SecuROM and describing the technique used to NoCD SecuROM 7 (as described in TIBERIUMNUY_REVERSING__FULL_PUBLIC_VERSION_1.3.pdf)
+* [version-proxy](https://github.com/BitCrackers/version-proxy) from BitCrackers for proxying the Windows version.dll code and approach
+* [MinHooks](https://github.com/TsudaKageyu/minhook) for API Hooking
 * SecuROM v3, v4, v5 approach by me
 
 ## Tested and Working Games + Versions
