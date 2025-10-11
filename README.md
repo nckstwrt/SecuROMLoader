@@ -46,3 +46,9 @@ Find out more here: [Example Config Files](https://github.com/nckstwrt/SecuROMLo
 ## Background
 After writing  [SafeDiscLoader2](https://github.com/nckstwrt/SafeDiscLoader2) I was interested in creating the same for SecuROM as these were the two big CD/DVD protections before Internet Activation took over (as it did even for SecuROM 8). ELF described how you can bypass the protection in SecuROM 7 so I wanted to implement a generic way of doing the same for every version I could find.
 
+ ## Notices
+> [!IMPORTANT]
+> This is not intended for Piracy but for users to exercise their Fair Use rights for the games they actually own and can no longer play due to draconian and unsupported copy protection
+
+> [!CAUTION]
+> Antivirus software that blocks code injection could block this dll or loader, so make sure to greenlist the included exe and dll or disable your antivirus software if required.
