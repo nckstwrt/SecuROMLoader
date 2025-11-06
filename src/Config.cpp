@@ -97,7 +97,7 @@ bool Config::GetBool(const char* szPropertyName, bool defaultReturn)
     return bResult;
 }
 
-bool Config::GetInt(const char* szPropertyName, int defaultReturn)
+int Config::GetInt(const char* szPropertyName, int defaultReturn)
 {
     int nResult = defaultReturn;
     if (jsonRoot)

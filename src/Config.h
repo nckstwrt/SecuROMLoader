@@ -15,7 +15,7 @@ public:
     bool LoadConfig(const char* szConfigFile);
     const char* GetValue(const char* szPropertyName);
     bool GetBool(const char* szPropertyName, bool defaultReturn = false);
-    bool GetInt(const char* szPropertyName, int defaultReturn = 0);
+    int GetInt(const char* szPropertyName, int defaultReturn = 0);
     std::string GetFileMapping(const char* szSourceFile);
 
     std::vector<std::tuple<const char*, const char*>> fileMappings;
