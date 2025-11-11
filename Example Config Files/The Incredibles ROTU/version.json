@@ -1,0 +1,14 @@
+{
+	"exefile": "INCROTU.exe",
+	"logging": false,
+	"logfile": "version.log.txt",
+	"logCreatefile": true,
+	"CDRomDriveLetter": "Y",
+    "CDROMVolumeName": "DISK2",
+	"fileMappings": [
+        {"source": "Y:\\*", "target": ".\\DISK2_CD\\*"},
+		{"source": "Y:/*", "target": ".\\DISK2_CD\\*"}
+	],
+	"Override7C0": "0000",
+	"CPUCount": 1
+}
