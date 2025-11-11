@@ -13,7 +13,7 @@ public:
     ~Config();
 
     bool LoadConfig(const char* szConfigFile);
-    const char* GetValue(const char* szPropertyName);
+    const char* GetValue(const char* szPropertyName, const char* szDefaultValue = nullptr);
     bool GetBool(const char* szPropertyName, bool defaultReturn = false);
     int GetInt(const char* szPropertyName, int defaultReturn = 0);
     std::string GetFileMapping(const char* szSourceFile);

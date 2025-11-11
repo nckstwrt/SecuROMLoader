@@ -84,7 +84,7 @@ int GeometryCheckCount = 0;
 __declspec(naked) void GeometryHook()
 {
 	__asm pushad;
-	logc(FOREGROUND_GREEN, "Geometry Hook Called: %d", GeometryCheckCount);
+	logc(FOREGROUND_GREEN, "Geometry Hook Called: %d\n", GeometryCheckCount);
 	__asm popad;
 	if (GeometryCheckCount == 0)
 	{
@@ -104,6 +104,15 @@ __declspec(naked) void GeometryHook()
 			ret
 		}
 	}
+	/*
+	if (GeometryCheckCount == 3)
+	{
+		__asm pushad;
+		logc(FOREGROUND_ORANGE, "Reversing CRC Fixer patches now...\n");
+		ReversePatches();
+		__asm popad;
+	}
+	__asm ret;*/
 }
 
 void CRCFixer(DWORD start, DWORD end, bool removeJNE, bool autoApplyPatches)

@@ -356,6 +356,17 @@ public:
 		return *this;
 	}
 
+	const NString& operator=(const wchar_t* str)
+	{
+		size_t outsize = 0;
+		size_t len = wcslen(str);
+		char* szString = new char[len + 1];
+		size_t a = wcstombs(szString, str, len + 1);
+		theString = szString;
+		delete[] szString;
+		return *this;
+	}
+
 	void Empty()
 	{
 		theString = "";

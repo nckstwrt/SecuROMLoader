@@ -78,11 +78,11 @@ bool Config::LoadConfig(const char* szConfigFile)
     return bResult;
 }
 
-const char* Config::GetValue(const char* szPropertyName)
+const char* Config::GetValue(const char* szPropertyName, const char *szDefaultValue)
 {
     if (jsonRoot)
         return json_getPropertyValue(jsonRoot, szPropertyName);
-    return nullptr;
+    return szDefaultValue;
 }
 
 bool Config::GetBool(const char* szPropertyName, bool defaultReturn)

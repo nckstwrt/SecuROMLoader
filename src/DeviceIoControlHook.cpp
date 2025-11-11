@@ -151,9 +151,18 @@ NTSTATUS NTAPI NtDeviceIoControlFile_Hook(HANDLE FileHandle, HANDLE Event, PIO_A
 						memcpy(&pBuf[0x7E4], hexstring("C309F845C309F845CB2B9866"), 12);
 						memcpy(&pBuf[0x7F2], hexstring("0102F07E1401F07E1400B193D692"), 14);
 
+						const char *Override7C0 = config.GetValue("Override7C0");
+						if (Override7C0)	// Absolute Hack - but just in case we can't patch the 0x7C0 check properly for some games - allow user to override it
+						{
+							logc(FOREGROUND_YELLOW, "Overriding PVD +7C0 value with: %s\n", Override7C0);
+							memcpy(&pBuf[0x7C0], hexstring(Override7C0), 2);
+						}
 						// strcpy((char*)&pBuf[0x28], "UKD_548520-001.001");		// Can put in the original disc's ID to get over the 1st CD Check
-
-						//GetKey(true);
+						/*
+						FILE* f = fopen("sptd_LBA16.bin", "rb");
+						fread(&pBuf[0], 1, 2048, f);
+						fclose(f);*/
+						// GetKey(true);
 					}
 
 					if (OutputBufferLength) 
@@ -273,6 +282,13 @@ NTSTATUS NTAPI NtDeviceIoControlFile_Hook(HANDLE FileHandle, HANDLE Event, PIO_A
 /*	else if (IoControlCode == IOCTL_STORAGE_MEDIA_REMOVAL)
 	{
 	}*/
+	
+	else if (IoControlCode == IOCTL_STORAGE_GET_MEDIA_TYPES_EX)
+	{
+		logc(FOREGROUND_CYAN, "IOCTL %X (Handle: %X) - IOCTL_STORAGE_GET_MEDIA_TYPES_EX - Faking Success\n", IoControlCode, FileHandle);
+		IoStatusBlock->Status = STATUS_SUCCESS;
+		return STATUS_SUCCESS;
+	}
 	else
 	{
 		// Pass to original function

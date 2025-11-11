@@ -30,9 +30,11 @@ NtDeviceIoControlFile_typedef NtDeviceIoControlFile_Orig;
 GetLogicalDrives_typedef GetLogicalDrives_Orig;
 GetDriveTypeA_typedef GetDriveTypeA_Orig;
 GetVolumeInformationA_typedef GetVolumeInformationA_Orig;
-FindFirstFileA_typedef FindFirstFileA_Orig;
 CreateFileA_typedef CreateFileA_Orig;
 CreateFileA_typedef CreateFileA_Orig_KBase;
+GetFileAttributesA_typedef GetFileAttributesA_Orig;
+GetFileAttributesW_typedef GetFileAttributesW_Orig;
+FindFirstFileA_typedef FindFirstFileA_Orig;
 CreateProcessA_typedef CreateProcessA_Orig;
 CreateProcessW_typedef CreateProcessW_Orig;
 LoadLibraryA_typedef LoadLibraryA_Orig;
@@ -133,6 +135,49 @@ HANDLE WINAPI CreateFileA_Hook_KBase(LPCSTR lpFileName, DWORD dwDesiredAccess, D
 		log("CreateFileA_Hook_KBase Hook - lpFileName: %s ret: %08X\n", lpFileName == NULL ? "!NULL!" : lpFileName, ret);
 
 	return ret;
+}
+
+DWORD WINAPI GetFileAttributesA_Hook(LPCSTR lpFileName)
+{
+	std::string strFileName;
+	if (lpFileName)
+	{
+		strFileName = config.GetFileMapping(lpFileName);
+		lpFileName = strFileName.c_str();
+	}
+	if (logCreateFile && lpFileName)
+		log("GetFileAttributesA_Hook Hook - lpFileName: %s\n", lpFileName == NULL ? "!NULL!" : lpFileName);
+	return GetFileAttributesA_Orig(lpFileName);
+}
+
+DWORD WINAPI GetFileAttributesW_Hook(LPCWSTR lpFileName)
+{
+	std::string strFileName;
+	NString temp;
+
+	if (lpFileName)
+	{
+		NString wideStr(lpFileName);
+		strFileName = config.GetFileMapping(wideStr);
+		temp = strFileName.c_str();
+		lpFileName = temp;
+	}
+	if (logCreateFile && lpFileName)
+		log("GetFileAttributesW_Hook Hook - lpFileName: %S\n", lpFileName == NULL ? L"!NULL!" : lpFileName);
+	return GetFileAttributesW_Orig(lpFileName);
+}
+
+HANDLE WINAPI FindFirstFileA_Hook(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
+{
+	std::string strFileName;
+	if (lpFileName)
+	{
+		strFileName = config.GetFileMapping(lpFileName);
+		lpFileName = strFileName.c_str();
+	}
+	if (logCreateFile && lpFileName)
+		log("FindFirstFileA_Hook Hook - lpFileName: %s\n", lpFileName == NULL ? "!NULL!" : lpFileName);
+	return FindFirstFileA_Orig(lpFileName, lpFindFileData);
 }
 
 int InjectSelf(DWORD pid)
@@ -417,6 +462,27 @@ void SecuROMLoader(HMODULE hModule)
 			log("Unable to hook CreateFileA from kernel32.dll\n");
 			return;
 		}
+	}
+
+	if ((status = MH_CreateHookApi(L"kernel32", "GetFileAttributesA", &GetFileAttributesA_Hook, reinterpret_cast<LPVOID*>(&GetFileAttributesA_Orig))) != MH_OK)
+	{
+		log("Unable to hook GetFileAttributesA: %d\n", status);
+		GetKey(true);
+		return;
+	}
+
+	if ((status = MH_CreateHookApi(L"kernel32", "GetFileAttributesW", &GetFileAttributesW_Hook, reinterpret_cast<LPVOID*>(&GetFileAttributesW_Orig))) != MH_OK)
+	{
+		log("Unable to hook GetFileAttributesW: %d\n", status);
+		GetKey(true);
+		return;
+	}
+
+	if ((status = MH_CreateHookApi(L"kernel32", "FindFirstFileA", &FindFirstFileA_Hook, reinterpret_cast<LPVOID*>(&FindFirstFileA_Orig))) != MH_OK)
+	{
+		log("Unable to hook FindFirstFileA: %d\n", status);
+		GetKey(true);
+		return;
 	}
 
 	if ((status = MH_CreateHookApi(L"kernel32", "CreateProcessA", &CreateProcessA_Hook, reinterpret_cast<LPVOID*>(&CreateProcessA_Orig))) != MH_OK)

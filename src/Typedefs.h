@@ -3,8 +3,10 @@ typedef NTSTATUS(WINAPI* NtDeviceIoControlFile_typedef)(HANDLE FileHandle, HANDL
 typedef DWORD(WINAPI* GetLogicalDrives_typedef)();
 typedef UINT(WINAPI* GetDriveTypeA_typedef)(LPCSTR lpRootPathName);
 typedef BOOL(WINAPI* GetVolumeInformationA_typedef)(LPCSTR lpRootPathName, LPSTR lpVolumeNameBuffer, DWORD nVolumeNameSize, LPDWORD lpVolumeSerialNumber, LPDWORD lpMaximumComponentLength, LPDWORD lpFileSystemFlags, LPSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize);
-typedef HANDLE(WINAPI* FindFirstFileA_typedef)(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData);
 typedef HANDLE(WINAPI* CreateFileA_typedef)(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+typedef DWORD(WINAPI* GetFileAttributesA_typedef)(LPCSTR lpFileName);
+typedef DWORD(WINAPI* GetFileAttributesW_typedef)(LPCWSTR lpFileName);
+typedef HANDLE(WINAPI* FindFirstFileA_typedef)(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData);
 typedef BOOL(WINAPI* CreateProcessA_typedef)(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 typedef BOOL(WINAPI* CreateProcessW_typedef)(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 typedef HMODULE(WINAPI* LoadLibraryA_typedef)(LPCSTR lpLibFileName); 
