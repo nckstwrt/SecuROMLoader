@@ -330,11 +330,30 @@ void CRCFixer(DWORD start, DWORD end, bool removeJNE, bool autoApplyPatches)
 		// Let's see if we can kill +7C0 check - as it does vary from disk to disk (FM2008 vs GTA SA)
 		std::vector<DWORD> CD7C0Checks = FindAllHexString(start, end, "8498C0070000");
 		logc(FOREGROUND_TURQUOISE, "Looking for +7C0 changes: %d found\n", CD7C0Checks.size());
-		for (auto& match : CD7C0Checks)
+
+		if (CD7C0Checks.size() == 0)
 		{
-			WriteProtectedBYTE(match, 0x38);			// cmp al, al
-			WriteProtectedBYTE(match + 1, 0xC0);
-			WriteProtectedDWORD(match + 2, 0x90909090);
+			logc(FOREGROUND_ORANGE, "No +7C0 checks found - finding early SecuROM 7 +7C0 Check Method...\n");
+			std::vector<DWORD> Old7C0Potential = FindAllHexString(start, end, "B9????????8B8C01????????83E101");
+			for (auto& match : Old7C0Potential)
+			{
+				DWORD checkValue = *(DWORD*)(match + 1) + (*(DWORD*)(match + 8));
+				logc(FOREGROUND_ORANGE, "Old +7C0 Potential Check at: %08X (Check Value: %08X)\n", match, checkValue);
+				if (checkValue == 0x7C0)
+				{
+					logc(FOREGROUND_ORANGE, "Old +7C0 Check Verified at: %08X\n", match);
+					WriteProtectedBYTE(match + 14, 0x0); // and ecx, 0   - change to compare with 0
+				}
+			}
+		}
+		else
+		{
+			for (auto& match : CD7C0Checks)
+			{
+				WriteProtectedBYTE(match, 0x38);			// cmp al, al
+				WriteProtectedBYTE(match + 1, 0xC0);
+				WriteProtectedDWORD(match + 2, 0x90909090);
+			}
 		}
 	}
 
