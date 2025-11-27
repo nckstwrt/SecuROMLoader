@@ -195,6 +195,13 @@ BYTE *hexstring(const char * szHexString)
 
 DWORD FindHex(DWORD StartAddr, DWORD EndAddr, BYTE* searchHex, DWORD searchSize)
 {
+#ifdef _DEBUG
+	log("FindHex called from %08X to %08X (searchSize: %08X)\n", StartAddr, EndAddr, searchSize);
+#endif
+
+	//DWORD dwOldProtect = 0;
+	//VirtualProtect((LPVOID)StartAddr, EndAddr - StartAddr, PAGE_EXECUTE_READWRITE, &dwOldProtect);		// Sometimes parts of the section can not even have read access! (Scarface!)
+
 	DWORD ret = -1L;
 	DWORD i;
 	BYTE* ptr = (BYTE*)StartAddr;
@@ -226,6 +233,9 @@ DWORD FindHex(DWORD StartAddr, DWORD EndAddr, BYTE* searchHex, DWORD searchSize)
 		ptr++;
 	}
 
+	//DWORD dwNewProtect;
+	//VirtualProtect((LPVOID)StartAddr, EndAddr - StartAddr, dwOldProtect, &dwNewProtect);
+
 	return ret;
 }
 
@@ -233,6 +243,10 @@ DWORD FindHexString(DWORD StartAddr, DWORD EndAddr, const char* szHexString, con
 {
 	DWORD i;
 	DWORD ret = -1L;
+
+#ifdef _DEBUG
+	log("FindHexString called: \"%s\" from %08X to %08X\n", szHexString, StartAddr, EndAddr);
+#endif
 
 	BYTE searchSize = (BYTE)(strlen(szHexString) / 2);
 	if (StartAddr < (EndAddr - searchSize))

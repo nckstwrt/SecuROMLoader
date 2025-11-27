@@ -1,4 +1,5 @@
 #pragma once
+typedef BOOL(WINAPI* IsBadReadPtr_typedef)(CONST VOID* lp, UINT_PTR ucb);
 typedef NTSTATUS(WINAPI* NtDeviceIoControlFile_typedef)(HANDLE FileHandle, HANDLE Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, ULONG IoControlCode, PVOID InputBuffer, ULONG InputBufferLength, PVOID OutputBuffer, ULONG OutputBufferLength);
 typedef DWORD(WINAPI* GetLogicalDrives_typedef)();
 typedef UINT(WINAPI* GetDriveTypeA_typedef)(LPCSTR lpRootPathName);

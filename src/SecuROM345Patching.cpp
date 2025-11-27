@@ -67,7 +67,12 @@ static bool GetSecuROMVersion(int* VersionMajor, int* VersionMinor, int* Version
 	auto sections = GetSections(ExeAddr);
 	for (auto& section : sections)
 	{
+		//DWORD dwOldProtect = 0;
+		//VirtualProtect((LPVOID)(ExeAddr + section->VirtualAddress), section->Misc.VirtualSize, PAGE_EXECUTE_READWRITE, &dwOldProtect);		// Sometimes parts of the section can not even have read access! (Scarface!)
+
 		versionString = FindHexString(ExeAddr + section->VirtualAddress, ExeAddr + section->VirtualAddress + section->Misc.VirtualSize, "4164644403000000??2E????2E????00");
+
+		//VirtualProtect((LPVOID)(ExeAddr + section->VirtualAddress), section->Misc.VirtualSize, dwOldProtect, &dwOldProtect);
 		if (versionString != -1L)
 			break;
 	}

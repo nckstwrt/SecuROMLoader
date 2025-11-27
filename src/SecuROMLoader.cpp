@@ -25,8 +25,8 @@
 // Max Payne 2 - 4.85.07 - Needs SafeSEH turned off in the exe manually (log file will tell you how)
 // Football Manager 2008 - 07.34.0013 (has SafeSEH but works anyway)
 
-
 NtDeviceIoControlFile_typedef NtDeviceIoControlFile_Orig;
+IsBadReadPtr_typedef IsBadReadPtr_Orig;
 GetLogicalDrives_typedef GetLogicalDrives_Orig;
 GetDriveTypeA_typedef GetDriveTypeA_Orig;
 GetVolumeInformationA_typedef GetVolumeInformationA_Orig;
@@ -47,6 +47,22 @@ bool logCreateFile = false;
 int HWBPStage = 0;
 int HWBPCheckDone = 0;
 const char* CDROMDriveLetter = NULL;
+
+DWORD CDCheckStartAddr = 0;
+DWORD CDCheckEndAddr = 0;
+
+// HACK: So SecuROM uses IsBadReadPtr and tries to check lots of memory - but eventually it crashes if DgVoodoo is used in Scarface (unsure why).
+// Make it always return BAD when called from the CD Check section.
+BOOL WINAPI IsBadReadPtr_Hook(CONST VOID* lp, UINT_PTR ucb)
+{
+	DWORD ret = (DWORD)_ReturnAddress();
+	if (CDCheckStartAddr != 0 && ret >= CDCheckStartAddr && ret <= CDCheckEndAddr)
+	{
+		//logc(FOREGROUND_YELLOW, "IsBadReadPtr_Hook called from CD Check area! Return Address: %08X lp: %08X ucb: %08X\n", ret, lp ? (DWORD)lp : 0, (DWORD)ucb);
+		return TRUE;	// Always Bad
+	}
+	return IsBadReadPtr_Orig(lp, ucb);
+}
 
 DWORD WINAPI GetLogicalDrives_Hook()
 {
@@ -277,10 +293,10 @@ HMODULE WINAPI LoadLibraryA_Hook(LPCSTR lpLibFileName)
 {
 	static DWORD TableClass = 0;
 
-	if (lpLibFileName)
-		log("LoadLibraryA_Hook: Loading %s\n", lpLibFileName);
-
 	HMODULE ret = LoadLibraryA_Orig(lpLibFileName);
+
+	if (lpLibFileName)
+		log("LoadLibraryA_Hook: Loaded %s (%08X)\n", lpLibFileName, (DWORD)ret);
 
 	ApplyDLLCompatibilityPatches(lpLibFileName);
 
@@ -350,6 +366,7 @@ NTSTATUS WINAPI NtContinue_Hook(PCONTEXT Context, BOOLEAN RaiseAlert)
 		//Context->Dr0 = Context->Dr1 = Context->Dr2 = Context->Dr3 = Context->Dr6 = Context->Dr7 = 0;
 		if (HWBPCheckDone++ == 1)
 		{
+			Securom7Confirmed = true;
 			CRCFixer();
 			GetKey(true);
 		}
@@ -413,6 +430,12 @@ void SecuROMLoader(HMODULE hModule)
 	{
 		log("Unable to hook NtDeviceIoControlFile\n");
 		GetKey(true);
+		return;
+	}
+
+	if (MH_CreateHookApi(L"kernel32", "IsBadReadPtr", &IsBadReadPtr_Hook, reinterpret_cast<LPVOID*>(&IsBadReadPtr_Orig)) != MH_OK)
+	{
+		log("Unable to hook IsBadReadPtr\n");
 		return;
 	}
 

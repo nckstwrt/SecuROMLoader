@@ -11,6 +11,8 @@
 #include "DeviceIoControlHook.h"
 #include "SecuROM345Patching.h"
 
+bool Securom7Confirmed = false;
+
 extern Config config;
 
 extern NtDeviceIoControlFile_typedef NtDeviceIoControlFile_Orig;
@@ -124,7 +126,10 @@ NTSTATUS NTAPI NtDeviceIoControlFile_Hook(HANDLE FileHandle, HANDLE Event, PIO_A
 					DWORD xferLen = sptd->DataTransferLength;
 					logc(FOREGROUND_RED, "[Intercept] READ(10) LBA=%u, returning blank %u bytes\n", lba, xferLen);
 
-					bool IsSecuROM345 = SecuROM345Patching();
+					bool IsSecuROM345 = false;
+					
+					if (!Securom7Confirmed)		// Don't bother keep doing this if we know we are handling SecuROM 7+
+						IsSecuROM345 = SecuROM345Patching();
 
 					if (sptd->DataBuffer && xferLen > 0) 
 						memset(sptd->DataBuffer, 0, xferLen);  // return zeros

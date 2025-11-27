@@ -7,8 +7,6 @@
 
 extern Config config;
 
-
-
 struct Patch
 {
 	DWORD addr;
@@ -115,6 +113,9 @@ __declspec(naked) void GeometryHook()
 	__asm ret;*/
 }
 
+extern DWORD CDCheckStartAddr;
+extern DWORD CDCheckEndAddr;
+
 void CRCFixer(DWORD start, DWORD end, bool removeJNE, bool autoApplyPatches)
 {
 	logc(FOREGROUND_CYAN, "Starting CRCFixer...\n");
@@ -137,6 +138,8 @@ void CRCFixer(DWORD start, DWORD end, bool removeJNE, bool autoApplyPatches)
 			CDCheckMatches = FindAllHexString(CDSectionStart, CDSectionStart + section->Misc.VirtualSize, "83E01F3C1F"); // and eax, 1F; cmp al, 1F;
 			if (CDCheckMatches.size() >= 1)
 			{
+				CDCheckStartAddr = CDSectionStart;
+				CDCheckEndAddr = CDSectionStart + section->Misc.VirtualSize;
 				CDCheckSection = section;
 				break;
 			}
