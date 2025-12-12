@@ -1,5 +1,5 @@
 # SecuROMLoader
-Allows playing SecuROM games (versions 4,5,6 and 7) on Modern Windows without the need of the CD/DVD
+Allows playing SecuROM games (versions 4,5,6 and 7 (and now some 8!)) on Modern Windows without the need of the CD/DVD
 
 # Download
 [Releases](https://github.com/nckstwrt/SecuROMLoader/releases)
@@ -18,6 +18,7 @@ Find out more here: [Example Config Files](https://github.com/nckstwrt/SecuROMLo
 * SecuROM v3, v4, v5 approach by me
 
 ## Tested and Working Games + Versions
+* Skylanders: Spyro's Adventure - v8.03.0012
 * Crysis - v7.34.0014
 * Command and Conquer 3 (v1.9) - v7.33.0017
 * Prototype - v7.39.0006
