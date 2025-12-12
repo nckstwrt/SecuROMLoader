@@ -74,6 +74,20 @@ NTSTATUS NTAPI NtDeviceIoControlFile_Hook(HANDLE FileHandle, HANDLE Event, PIO_A
 				return STATUS_UNSUCCESSFUL;
 			}
 
+			if (sptd->Cdb[0] == 0x5A) // Opcode 0x5A: MODE SENSE(10)
+			{
+				logc(FOREGROUND_RED, "Faking MODE SENSE(10) response\n");	
+				IoStatusBlock->Status = STATUS_UNSUCCESSFUL;
+				return STATUS_UNSUCCESSFUL;
+			}
+
+			if (sptd->Cdb[0] == 0x46) // Opcode 0x46: GET CONFIGURATION
+			{
+				logc(FOREGROUND_RED, "Faking GET CONFIGURATION response\n");
+				IoStatusBlock->Status = STATUS_UNSUCCESSFUL;
+				return STATUS_UNSUCCESSFUL;
+			}
+
 			if ( sptd->Cdb[0] == 0x43) // READ TOC/PMA/ATIP = 0x43
 			{
 				if (CaptureCDIO)

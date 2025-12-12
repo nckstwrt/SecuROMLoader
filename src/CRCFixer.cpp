@@ -79,38 +79,40 @@ void ReversePatches()
 }
 
 int GeometryCheckCount = 0;
+bool GeometryCheckOneToZero = false;
 __declspec(naked) void GeometryHook()
 {
 	__asm pushad;
 	logc(FOREGROUND_GREEN, "Geometry Hook Called: %d\n", GeometryCheckCount);
 	__asm popad;
-	if (GeometryCheckCount == 0)
+	if (GeometryCheckCount == 0 || (GeometryCheckOneToZero && GeometryCheckCount == 1))
 	{
 		__asm 
 		{
 			inc [GeometryCheckCount]
 			mov ah, 0
-			ret
+			//ret
 		}
 	}
 	else
 	{
 		__asm
 		{
-			inc[GeometryCheckCount]
+			inc [GeometryCheckCount]
 			mov ah, 1
-			ret
+			//ret
 		}
 	}
-	/*
-	if (GeometryCheckCount == 3)
+	if (GeometryCheckCount == 4)		// Securom 8 seems to do 4 geometry checks and checks for changes?
 	{
 		__asm pushad;
 		logc(FOREGROUND_ORANGE, "Reversing CRC Fixer patches now...\n");
 		ReversePatches();
+		GetKey(true);
 		__asm popad;
+		__asm add dword ptr [esp], 3  // jump back to the test ah,5
 	}
-	__asm ret;*/
+	__asm ret;
 }
 
 extern DWORD CDCheckStartAddr;
@@ -301,19 +303,14 @@ void CRCFixer(DWORD start, DWORD end, bool removeJNE, bool autoApplyPatches)
 		CRCCount++;
 	}
 
-	if (autoApplyPatches)
-	{
-		ApplyPatches();
-	}
-
 	if (CDCheckMatches.size() > 0)	// If we have CD Matches then we're removing SecuROM 7/8 Checks. Else let the 345Patcher fix them.
 	{
 		logc(FOREGROUND_TURQUOISE, "Applying %d CD Patches...\n", CDCheckMatches.size());
 		for (auto &match : CDCheckMatches)
 		{
-			WriteProtectedBYTE(match + CDCheckOffset, 0xB0);		// mov al, 1f
-			WriteProtectedBYTE(match + CDCheckOffset + 1, 0x1F);
-			WriteProtectedBYTE(match + CDCheckOffset + 2, 0x90);
+			WritePatchBYTE(match + CDCheckOffset, 0xB0);		// mov al, 1f
+			WritePatchBYTE(match + CDCheckOffset + 1, 0x1F);
+			WritePatchBYTE(match + CDCheckOffset + 2, 0x90);
 		}
 		logc(FOREGROUND_TURQUOISE, "Done\n");
 
@@ -323,16 +320,18 @@ void CRCFixer(DWORD start, DWORD end, bool removeJNE, bool autoApplyPatches)
 		logc(FOREGROUND_TURQUOISE, "GeometryHook Function: %08X\n", (DWORD)GeometryHook);
 		for (auto& match : geoChecks)
 		{
-			WriteProtectedBYTE(match + 6 + 6, 0xE8);
-			WriteProtectedDWORD(match + 6 + 6 + 1, (((DWORD)GeometryHook) - (match + 6 + 6)) - 5);
-			WriteProtectedBYTE(match + 6 + 6 + 1 + 4, 0x90);
-			WriteProtectedBYTE(match + 6 + 6 + 1 + 5, 0x90);
-			WriteProtectedBYTE(match + 6 + 6 + 1 + 6, 0x90);
+			WritePatchBYTE(match + 6 + 6, 0xE8);
+			WritePatchDWORD(match + 6 + 6 + 1, (((DWORD)GeometryHook) - (match + 6 + 6)) - 5);
+			WritePatchBYTE(match + 6 + 6 + 1 + 4, 0x90);
+			WritePatchBYTE(match + 6 + 6 + 1 + 5, 0x90);
+			WritePatchBYTE(match + 6 + 6 + 1 + 6, 0x90);
 		}
 
 		// Let's see if we can kill +7C0 check - as it does vary from disk to disk (FM2008 vs GTA SA)
 		std::vector<DWORD> CD7C0Checks = FindAllHexString(start, end, "8498C0070000");			// 01158FE8 | 8498 C0070000 | test byte ptr ds:[eax+7C0],bl
 		logc(FOREGROUND_TURQUOISE, "Looking for +7C0 changes: %d found\n", CD7C0Checks.size());
+
+		GeometryCheckOneToZero = config.GetBool("GeometryCheckOneToZero");		
 
 		if (config.GetValue("Override7C0") == NULL)
 		{
@@ -347,7 +346,7 @@ void CRCFixer(DWORD start, DWORD end, bool removeJNE, bool autoApplyPatches)
 					if (checkValue == 0x7C0)
 					{
 						logc(FOREGROUND_ORANGE, "Old +7C0 Check Verified at: %08X\n", match);
-						WriteProtectedBYTE(match + 14, 0x0); // and ecx, 0   - change to compare with 0
+						WritePatchBYTE(match + 14, 0x0); // and ecx, 0   - change to compare with 0
 					}
 				}
 			}
@@ -359,15 +358,18 @@ void CRCFixer(DWORD start, DWORD end, bool removeJNE, bool autoApplyPatches)
 					//WriteProtectedBYTE(match, 0x84);			// test bl,bl
 					//WriteProtectedBYTE(match + 1, 0xDB);
 					//WriteProtectedDWORD(match + 2, 0x90909090);
-					WriteProtectedBYTE(match, 0x38);			// cmp al, al
-					WriteProtectedBYTE(match + 1, 0xC0);
-					WriteProtectedDWORD(match + 2, 0x90909090);
+					WritePatchBYTE(match, 0x38);			// cmp al, al
+					WritePatchBYTE(match + 1, 0xC0);
+					WritePatchDWORD(match + 2, 0x90909090);
 				}
 			}
 		}
 		else
 			logc(FOREGROUND_ORANGE, "Overriding +7C0 so not removing +7C0 checks\n");
 	}
+
+	if (autoApplyPatches)
+		ApplyPatches();
 
 	RestrictProcessors(config.GetInt("CPUCount", -1));
 
