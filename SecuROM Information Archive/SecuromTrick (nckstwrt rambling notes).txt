@@ -4896,3 +4896,435 @@ Causing a problem ???
 0056B59E | 68 B0260000              | push 26B0                                         |
 0056B5A3 | 74 12                    | je ar3.56B5B7                                     |
 ^ no that's fine - it's some other non-eax patchj though
+
+-------------------------------------------------------------------------------------------------------------------
+Incredibles Underminer - 07.12.0013
+
+Doesn't have a +7C0 to find ??
+.text section
+00C08100 | B9 3992F9FF                     | mov ecx,FFF99239                                        |
+00C08105 | 8D8C29 476D0600                 | lea ecx,dword ptr ds:[ecx+ebp+66D47]                    |
+00C0810C | E8 7FD4F4FF                     | call incrotu.B55590                                     |
+00C08111 | B0 1F                           | mov al,1F                                               |
+00C08113 | 90                              | nop                                                     |
+00C08114 | 83EC 04                         | sub esp,4                                               |
+00C08117 | 891424                          | mov dword ptr ss:[esp],edx                              |
+00C0811A | 8BD0                            | mov edx,eax                                             |
+
+
+
+Is calling ExitProcess over L:/data/BOOT.HIP
+00401A90 | 83C4 08                         | add esp,8                                               |
+00401A93 | 85C0                            | test eax,eax                                            |
+00401A95 | 75 0F                           | jne incrotu.401AA6                                      |
+00401A97 | 8B8424 88000000                 | mov eax,dword ptr ss:[esp+88]                           |
+00401A9E | 85C0                            | test eax,eax                                            |
+00401AA0 | 0F85 51FFFFFF                   | jne incrotu.4019F7                                      |
+00401AA6 | 6A 01                           | push 1                                                  |
+00401AA8 | FF15 60B06900                   | call dword ptr ds:[<&ExitProcess>]                      |
+00401AAE | CC                              | int3                                                    |
+00401AAF | CC                              | int3                                                    |
+
+006823F1 | E8 F5800000                     | call <incrotu.sub_68A4EB>                               |
+006823F6 | 59                              | pop ecx                                                 |
+006823F7 | 83E8 60                         | sub eax,60                                              |
+006823FA | EB 05                           | jmp incrotu.682401                                      |
+006823FC | E8 05800000                     | call <incrotu.sub_68A406>                               |
+00682401 | 8985 08FEFFFF                   | mov dword ptr ss:[ebp-1F8],eax                          |
+00682407 | 57                              | push edi                                                | edi:"Y:/data/BOOT.HIP"
+00682408 | 8D85 2CFFFFFF                   | lea eax,dword ptr ss:[ebp-D4]                           | [ebp-D4]:"data/BOOT.HIP"
+0068240E | 50                              | push eax                                                |
+0068240F | 56                              | push esi                                                | esi:"BOOT.HIP"
+00682410 | FF15 88B06900                   | call dword ptr ds:[<&FindFirstFileA>]                   |
+00682416 | 83CF FF                         | or edi,FFFFFFFF                                         | edi:"Y:/data/BOOT.HIP"
+00682419 | 3BC7                            | cmp eax,edi                                             | edi:"Y:/data/BOOT.HIP"
+0068241B | 8985 14FEFFFF                   | mov dword ptr ss:[ebp-1EC],eax                          |
+00682421 | 0F85 A5000000                   | jne incrotu.6824CC                                      |
+00682427 | 68 ECD76C00                     | push incrotu.6CD7EC                                     | 6CD7EC:"./\\"
+0068242C | 56                              | push esi                                                | esi:"BOOT.HIP"
+0068242D | E8 BA810000                     | call <incrotu.sub_68A5EC>                               |
+00682432 | 85C0                            | test eax,eax                                            |
+00682434 | 59                              | pop ecx                                                 |
+00682435 | 59                              | pop ecx                                                 |
+00682436 | 74 7E                           | je incrotu.6824B6                                       |
+00682438 | 68 04010000                     | push 104                                                |
+0068243D | 8D85 28FEFFFF                   | lea eax,dword ptr ss:[ebp-1D8]                          |
+
+
+
+00B55597 | 8B4D FC                         | mov ecx,dword ptr ss:[ebp-4]                            |   <--- look up ebp - and searched for 168A2855 which is part of our PVD
+Found:
+0126B470  00 00 00 00 21 EC 95 11 09 08 00 00 00 00 00 00  ....!ì..........  
+0126B480  16 8A 28 55 00 00 00 00 00 00 00 00 00 00 00 00  ..(U............  
+So can memory bp on 09 08 to hopefully find the 7C0
+
+00BE55F8 | 8B8428 8F820200                 | mov eax,dword ptr ds:[eax+ebp+2828F]                    |
+00BE55FF | B9 B736F6FF                     | mov ecx,FFF636B7                                        |
+00BE5604 | 8B8C01 09D10900                 | mov ecx,dword ptr ds:[ecx+eax+9D109]                    |
+00BE560B | 83E1 01                         | and ecx,1                                               |  <--- ECX is 00000809 wants to be 0 or similar
+00BE560E | 68 64130000                     | push 1364                                               |
+00BE5613 | 74 11                           | je incrotu.BE5626                                       |
+
+^ gets me to this
+
+Ok - so I now know what's going on with this one. Two things:
+
+There's something I call the 7C0 check. SecuROM checks the 0x7C0 byte of LBA 16 (PVD) of the CD for a two digit code. For old SecuROM versions setting these two bytes to 00 00 is enough. For later versions 09 08 normally works. I emulate the values but I try and disable the check any way. The check in version of 7 of SecuROM tends to look like:
+test byte ptr ds:[eax+7C0],bl
+Pretty easy to search for and find!
+But in this particular game the check looks like:
+
+mov ecx,FFF636B7
+mov ecx,dword ptr ds:[ecx+eax+9D109]
+Never seen it referenced that way before - so hard for me to make a check to find it and patch it unless I see other games using the same method. This can make it say "wrong disc inserted". However, if you hit retry it ignores this issue and just works anyway.
+I'm going to add a "Override7C0": "0000" option to version.json to fix it for this game
+
+Incredibles Underminer is exiting process after the SecuROM code because it checks for the existence of Y:/data/BOOT.HIP - but it doesn't do this with CreateFileA or even GetFileAttributesA - but FindFirstFileA. So need to hook that as well. So your version.json will end up being this for use with version 1.2 when I release it:
+{
+	"exefile": "INCROTU.exe",
+	"logging": false,
+	"logfile": "version.log.txt",
+	"logCreatefile": true,
+	"CDRomDriveLetter": "Y",
+    "CDROMVolumeName": "DISK2",
+	"fileMappings": [
+        {"source": "Y:\\*", "target": ".\\DISK2_CD\\*"},
+	{"source": "Y:/*", "target": ".\\DISK2_CD\\*"}
+	],
+	"Override7C0": "0000",
+	"CPUCount": 1
+}
+With the above and the new version all is working well for me now. Thanks for the bug report!
+
+-------------------------------------------------------------------------------------------------------------------------
+Juiced Czech DVD Version
+Possibly v 7.02
+
+No +7C0 ? Override?
+
+It has a second .text section
+
+Search for 83E1 01 68 (and ecx, 1 + push) - to see if similar +7C0 check as Incredibles Underminer
+
+First hit:
+007E13D3 | 8B8428 E1D70500                 | mov eax,dword ptr ds:[eax+ebp+5D7E1]                    |
+007E13DA | B9 859EFAFF                     | mov ecx,FFFA9E85                                        |
+007E13DF | 8B8C01 7B610500                 | mov ecx,dword ptr ds:[ecx+eax+5617B]                    |
+007E13E6 | 83E1 01                         | and ecx,1                                               |
+007E13E9 | 68 DB020000                     | push 2DB                                                |
+
+FFFA9E85 + 5617B = 
+
+B9????????8B8C01????????83E101
+
+so looks similar
+
+Breakpointed all of them - this one got his first:
+00AD75A5 | 8B8428 936C0900                 | mov eax,dword ptr ds:[eax+ebp+96C93]                    |
+00AD75AC | B9 8B87F9FF                     | mov ecx,FFF9878B                                        |
+00AD75B1 | 8B8C01 35800600                 | mov ecx,dword ptr ds:[ecx+eax+68035]                    |
+00AD75B8 | 83E1 01                         | and ecx,1                                               |
+00AD75BB | 68 F7330000                     | push 33F7                                               |
+00AD75C0 | 74 10                           | je juiced.AD75D2 
+
+FFF9878B + 68035 = 1000007C0
+
+FFF9878B + 68035 = 1000007C0 !!!
+
+Get weird Czech virtual memory error
+0059BF9F | 6A 00                           | push 0                                                  |
+0059BFA1 | FF15 84A26C00                   | call dword ptr ds:[<&LoadCursorA>]                      |
+0059BFA7 | 6A 04                           | push 4                                                  |
+0059BFA9 | 894424 3C                       | mov dword ptr ss:[esp+3C],eax                           |
+0059BFAD | FF15 3CA06C00                   | call dword ptr ds:[<&GetStockObject>]                   |
+0059BFB3 | 894424 3C                       | mov dword ptr ss:[esp+3C],eax                           |
+0059BFB7 | 8D0424                          | lea eax,dword ptr ss:[esp]                              |
+0059BFBA | 50                              | push eax                                                |
+0059BFBB | C74424 44 0CD86F00              | mov dword ptr ss:[esp+44],juiced.6FD80C                 | [esp+44]:"jet", 6FD80C:"AppMenu"
+0059BFC3 | C74424 48 08D86F00              | mov dword ptr ss:[esp+48],juiced.6FD808                 | 6FD808:"jet"
+0059BFCB | FF15 38A16C00                   | call dword ptr ds:[<&GlobalMemoryStatus>]               |
+0059BFD1 | 8B4C24 18                       | mov ecx,dword ptr ss:[esp+18]                           |
+0059BFD5 | 3B4C24 08                       | cmp ecx,dword ptr ss:[esp+8]                            |
+0059BFD9 | 76 07                           | jbe juiced.59BFE2                                       |
+0059BFDB | 837C24 10 00                    | cmp dword ptr ss:[esp+10],0                             |
+0059BFE0 | 77 20                           | ja juiced.59C002                                        |
+0059BFE2 | 68 00000500                     | push 50000                                              | 50000:L"0api-ms-win-security-isolatedcontainer-l1-1-1api-ms-win-security-isolationapi-l1-1-0api-ms-win-security-isolationapi-l1-2-0api-ms-win-security-isolationpolicy-l1-1-0api-ms-win-security-isolationpolicy-l1-2-0api-ms-win-security-licenseprotection-l1-1-0licenseprotection.dllapi-ms-win-security-logon-l1-1-1api-ms-win-security-lsalookup-ansi-l2-1-0api-ms-win-security-lsalookup-l1-1-2api-ms-win-security-lsalookup-l2-1-1api-ms-win-security-lsapolicy-l1-1-2api-ms-win-security-provider-ansi-l1-1-0api-ms-wi
+0059BFE7 | 68 7CED6E00                     | push juiced.6EED7C                                      | 6EED7C:L"Juiced"
+0059BFEC | 33C0                            | xor eax,eax                                             |
+0059BFEE | E8 DDFBFFFF                     | call juiced.59BBD0                                      |
+0059BFF3 | 50                              | push eax                                                |
+0059BFF4 | 6A 00                           | push 0                                                  |
+0059BFF6 | FF15 38A26C00                   | call dword ptr ds:[<&MessageBoxW>]                      |
+0059BFFC | 33C0                            | xor eax,eax                                             |
+0059BFFE | 83C4 48                         | add esp,48                                              |
+0059C001 | C3                              | ret                                                     |
+
+---------------------------------------------------------------------------------------------------------------------------
+Scarface US - 1.0.0.2 does not like how we do +7C0 check removal. 
+
+00C06EF3 | 872C24                          | xchg dword ptr ss:[esp],ebp                             | [esp]:TpCallbackIndependent+487
+00C06EF6 | B9 63B3F6FF                     | mov ecx,FFF6B363                                        | ecx:ZwSetInformationProcess+C
+00C06EFB | 8D8C29 594C0900                 | lea ecx,dword ptr ds:[ecx+ebp+94C59]                    | ecx:ZwSetInformationProcess+C
+00C06F02 | E8 8921DAFF                     | call scarface.9A9090                                    |
+00C06F07 | B8 8FCDF4FF                     | mov eax,FFF4CD8F                                        |  FFF4CD8F + B327D = 10000000C
+00C06F0C | 8B8428 7D320B00                 | mov eax,dword ptr ds:[eax+ebp+B327D]                    |
+00C06F13 | 33DB                            | xor ebx,ebx                                             |
+00C06F15 | 83C3 01                         | add ebx,1                                               |
+00C06F18 | 38C0                            | cmp al,al                                               |   <---- changing to this does not work
+00C06F1A | 90                              | nop                                                     |
+00C06F1B | 90                              | nop                                                     |
+00C06F1C | 90                              | nop                                                     |
+00C06F1D | 90                              | nop                                                     |
+00C06F1E | 895D FC                         | mov dword ptr ss:[ebp-4],ebx                            |
+00C06F21 | B9 A78CFDFF                     | mov ecx,FFFD8CA7                                        | ecx:ZwSetInformationProcess+C
+00C06F26 | 8D8C29 15730200                 | lea ecx,dword ptr ds:[ecx+ebp+27315]                    | ecx:ZwSetInformationProcess+C
+00C06F2D | 9C                              | pushfd                                                  |
+00C06F2E | 68 110C0000                     | push C11                                                |
+00C06F33 | 74 11                           | je scarface.C06F46                                      |    <---- we'd normally be forcing this
+00C06F35 | 810424 8ED99200                 | add dword ptr ss:[esp],scarface.92D98E                   |
+00C06F3C | 90                              | nop                                                      |
+00C06F3D | 810424 C3892D00                 | add dword ptr ss:[esp],2D89C3                            |
+00C06F44 | EB FA                           | jmp scarface.C06F40                                      |
+00C06F46 | 810424 4F60C05E                 | add dword ptr ss:[esp],5EC0604F                          |
+00C06F4D | 55                              | push ebp                                                 |
+00C06F4E | 5D                              | pop ebp                                                  |
+00C06F4F | 810424 C20400A2                 | add dword ptr ss:[esp],A20004C2                          |
+00C06F56 | C1EE 00                         | shr esi,0                                                |
+00C06F59 | FF7424 04                       | push dword ptr ss:[esp+4]                                |
+00C06F5D | 9D                              | popfd                                                    |
+00C06F5E | EB F2                           | jmp scarface.C06F52                                      |
+
+
+
+.....
+PVD is accessed again here:
+009AEF08 | C1E9 02                         | shr ecx,2                                                |
+009AEF0B | 83E2 03                         | and edx,3                                                |
+009AEF0E | 83F9 08                         | cmp ecx,8                                                |
+009AEF11 | 72 29                           | jb scarface.9AEF3C                                       |
+009AEF13 | F3:A5                           | rep movsd                                                |
+009AEF15 | FF2495 2CF09A00                 | jmp dword ptr ds:[edx*4+9AF02C]                          |
+009AEF1C | 8BC7                            | mov eax,edi                                              |
+009AEF1E | BA 03000000                     | mov edx,3                                                |
+......
+Then later we have:
+00C214A8 | 890C24                          | mov dword ptr ss:[esp],ecx                               |
+00C214AB | E8 607F0000                     | call scarface.C29410                                     |
+00C214B0 | F605 8C8EE300 01                | test byte ptr ds:[E38E8C],1                              |   <--- = 9
+00C214B7 | 9C                              | pushfd                                                   |
+00C214B8 | 68 ED330000                     | push 33ED                                                |
+00C214BD | 74 13                           | je scarface.C214D2                                       |
+
+
+Football Manager 2008 
+
+
+02B3F7E7              | 8498 C0070000                         | test byte ptr ds:[eax+7C0],bl                    |   <---- is 09 for Football Manager
+
+
+02B3F7B7 | B9 070BFEFF                     | mov ecx,FFFE0B07                                        |
+02B3F7BC | 8D6424 FC                       | lea esp,dword ptr ss:[esp-4]                            | [esp-04]:ZwDeviceIoControlFile+C
+02B3F7C0 | 893424                          | mov dword ptr ss:[esp],esi                              |
+02B3F7C3 | 8B3424                          | mov esi,dword ptr ss:[esp]                              |
+02B3F7C6 | 8D6424 04                       | lea esp,dword ptr ss:[esp+4]                            |
+02B3F7CA | 8D8C29 B5F40100                 | lea ecx,dword ptr ds:[ecx+ebp+1F4B5]                    |
+02B3F7D1 | E8 7A7DD5FF                     | call fm - copy.2897550                                  |
+02B3F7D6 | B8 532FF9FF                     | mov eax,FFF92F53                                        |
+02B3F7DB | 8B8428 B9D00600                 | mov eax,dword ptr ds:[eax+ebp+6D0B9]                    |  <---- FFF92F53 + 6D0B9 = 10000000C --- its a DWORD pointer to the PVD
+02B3F7E2 | 33DB                            | xor ebx,ebx                                             |
+02B3F7E4 | 83C3 01                         | add ebx,1                                               |
+02B3F7E7 | 38C0                            | cmp al,al                                               |   EAX = 03341690
+02B3F7E9 | 90                              | nop                                                     |   ZF = 1
+02B3F7EA | 90                              | nop                                                     |
+02B3F7EB | 90                              | nop                                                     |
+02B3F7EC | 90                              | nop                                                     |
+02B3F7ED | 895D FC                         | mov dword ptr ss:[ebp-4],ebx                            |
+02B3F7F0 | B9 7767F9FF                     | mov ecx,FFF96777                                        |
+02B3F7F5 | 8D8C29 45980600                 | lea ecx,dword ptr ds:[ecx+ebp+69845]                    | FFF96777 + 69845 = FFFFFFBC
+02B3F7FC | 9C                              | pushfd                                                  |
+02B3F7FD | 68 2E070000                     | push 72E                                                |
+02B3F802 | 74 18                           | je fm - copy.2B3F81C                                    |02B3F804 | 810424 41C2DE01                 | add dword ptr ss:[esp],fm - copy.1DEC241                |
+02B3F80B | 0FACFE 00                       | shrd esi,edi,0                                          |
+02B3F80F | 810424 C32ED500                 | add dword ptr ss:[esp],fm - copy.D52EC3                 |
+02B3F816 | 83CF 00                         | or edi,0                                                |
+02B3F819 | EB F7                           | jmp fm - copy.2B3F812                                    |
+
+02B3F81C | 810424 D0ECB36D                 | add dword ptr ss:[esp],6DB3ECD0                          |
+02B3F823 | 810424 C2040095                 | add dword ptr ss:[esp],950004C2                          |
+02B3F82A | FF7424 04                       | push dword ptr ss:[esp+4]                                |
+02B3F82E | 9D                              | popfd                                                    |
+02B3F82F | EB F5                           | jmp fm - copy.2B3F826                                    |
+
+02B3F7E7 | 38D8                            | cmp al,bl                                               | ? nope
+
+Football Manager also does another check:
+02B5AB5B | 890C24                          | mov dword ptr ss:[esp],ecx                               |
+02B5AB5E | E8 5DA50000                     | call fm - copy.2B650C0                                   |
+02B5AB63 | F605 CC9DD602 01                | test byte ptr ds:[2D69DCC],1                             |
+02B5AB6A | 9C                              | pushfd                                                   |
+02B5AB6B | 9C                              | pushfd                                                   |
+02B5AB6C | 83EC 18                         | sub esp,18                                               |
+
+--------------------------------------------------------------------------------------------------------------------
+Skylanders Spyro's Adventure - 08.03.0012
+
+https://cs.rin.ru/forum/viewtopic.php?p=912641#p912641
+
+First hit:
+01751957 | 8BC8                            | mov ecx,eax                                              |
+01751959 | E8 4ED97FFF                     | call skylanders.F4F2AC                                   |
+0175195E | B0 1F                           | mov al,1F                                                |
+01751960 | 90                              | nop                                                      |
+01751961 | 3C 1F                           | cmp al,1F                                                |
+01751963 | 9C                              | pushfd                                                   |
+01751964 | 68 79270000                     | push 2779                                                |
+01751969 | 75 12                           | jne skylanders.175197D                                   |
+
+7C0 1?:
+0173FE01 | E8 CA37AFFF                     | call skylanders.12335D0                                  |
+0173FE06 | B8 65FFFFFF                     | mov eax,FFFFFF65                                         |
+0173FE0B | 8B8428 A7000000                 | mov eax,dword ptr ds:[eax+ebp+A7]                        |
+0173FE12 | 33DB                            | xor ebx,ebx                                              |
+0173FE14 | F9                              | stc                                                      |
+0173FE15 | 83D3 00                         | adc ebx,0                                                |
+0173FE18 | 38C0                            | cmp al,al                                                |
+
+7C0 2?
+0173FC2D | B8 47FFFFFF                     | mov eax,FFFFFF47                                         | eax:protected: static class AK::IAkStreamMgr *AK::IAkStreamMgr::m_pStreamMgr+CFA484
+0173FC32 | 8B8428 C5000000                 | mov eax,dword ptr ds:[eax+ebp+C5]                        | eax:protected: static class AK::IAkStreamMgr *AK::IAkStreamMgr::m_pStreamMgr+CFA484
+0173FC39 | 33DB                            | xor ebx,ebx                                              |
+0173FC3B | 83C3 01                         | add ebx,1                                                |
+0173FC3E | 38C0                            | cmp al,al                                                |
+
+Geo 1:
+0179260F | 029D DD057839                   | add bl,byte ptr ss:[ebp+397805DD]                        |
+01792615 | 93                              | xchg ebx,eax                                             | ebx:protected: static class AK::IAkStreamMgr *AK::IAkStreamMgr::m_pStreamMgr+CFACB4, eax:protected: static class AK::IAkStreamMgr *AK::IAkStreamMgr::m_pStreamMgr+2AD16C
+01792616 | 01DC                            | add esp,ebx                                              | ebx:protected: static class AK::IAkStreamMgr *AK::IAkStreamMgr::m_pStreamMgr+CFACB4
+01792618 | 25 E0B99301                     | and eax,skylanders.193B9E0                               | eax:protected: static class AK::IAkStreamMgr *AK::IAkStreamMgr::m_pStreamMgr+2AD16C
+0179261D | DC0D 802A8D01                   | fmul qword ptr ds:[18D2A80]                              |
+01792623 | E8 78257C79                     | call version.7AF54BA0                                    |
+01792628 | 90                              | nop                                                      |
+01792629 | 90                              | nop                                                      |
+0179262A | 90                              | nop                                                      |
+0179262B | F6C4 05                         | test ah,5                                                |
+0179262E | 9C                              | pushfd                                                   |
+0179262F | 9C                              | pushfd                                                   |
+
+Geo 2:
+0179FB3A | 9D                              | popfd                                                    |
+0179FB3B | DD05 78399301                   | fld qword ptr ds:[1933978]                               |
+0179FB41 | BE 7CDBA401                     | mov esi,skylanders.1A4DB7C                               | esi:protected: static class AK::IAkStreamMgr *AK::IAkStreamMgr::m_pStreamMgr+CFACE8
+0179FB46 | DC25 E0B99301                   | fsub qword ptr ds:[193B9E0]                              |
+0179FB4C | DC0D D4CA9101                   | fmul qword ptr ds:[191CAD4]                              |
+0179FB52 | E8 49507B79                     | call version.7AF54BA0                                    |
+0179FB57 | 90                              | nop                                                      |
+0179FB58 | 90                              | nop                                                      |
+0179FB59 | 90                              | nop                                                      |
+0179FB5A | F6C4 05                         | test ah,5                                                |
+0179FB5D | 9C                              | pushfd                                                   |
+0179FB5E | 9C                              | pushfd                                                   |
+0179FB5F | 83EC 24                         | sub esp,24                                               |
+
+Instantly complains!
+
+Geo 3:
+017A21E6 | DD05 78399301                   | fld qword ptr ds:[1933978]                               |
+017A21EC | DC25 E0B99301                   | fsub qword ptr ds:[193B9E0]                              |
+017A21F2 | DC0D E43F9101                   | fmul qword ptr ds:[1913FE4]                              |
+017A21F8 | E8 A3297B79                     | call version.7AF54BA0                                    |
+017A21FD | 90                              | nop                                                      |
+017A21FE | 90                              | nop                                                      |
+017A21FF | 90                              | nop                                                      |
+017A2200 | F6C4 05                         | test ah,5                                                |
+017A2203 | 9C                              | pushfd                                                   |
+
+Geo 4:
+017733BC | C74424 04 C20400C8              | mov dword ptr ss:[esp+4],C80004C2                        |
+017733C4 | EB FA                           | jmp skylanders.17733C0                                   |
+017733C6 | DD05 78399301                   | fld qword ptr ds:[1933978]                               |
+017733CC | DC25 E0B99301                   | fsub qword ptr ds:[193B9E0]                              |
+017733D2 | DC0D E43F9101                   | fmul qword ptr ds:[1913FE4]                              |
+017733D8 | E8 C3177E79                     | call version.7AF54BA0                                    |
+017733DD | 90                              | nop                                                      |
+017733DE | 90                              | nop                                                      |
+017733DF | 90                              | nop                                                      |
+017733E0 | F6C4 05                         | test ah,5                                                |
+
+Normal
+017733BC | C74424 04 C20400C8              | mov dword ptr ss:[esp+4],C80004C2                        |
+017733C4 | EB FA                           | jmp skylanders.17733C0                                   |
+017733C6 | DD05 78399301                   | fld qword ptr ds:[1933978]                               |
+017733CC | DC25 E0B99301                   | fsub qword ptr ds:[193B9E0]                              |
+017733D2 | DC0D E43F9101                   | fmul qword ptr ds:[1913FE4]                              |
+017733D8 | DC1D 78EB8B01                   | fcomp qword ptr ds:[18BEB78]                             |
+017733DE | DFE0                            | fnstsw ax                                                |
+017733E0 | F6C4 05                         | test ah,5                                                |
+017733E3 | 9C                              | pushfd                                                   |
+
+
+Not sure what this is - but making it return eax == 1 did something?
+0179FBF7 | 8D6424 FC                       | lea esp,dword ptr ss:[esp-4]                             | [esp-04]:protected: static class AK::IAkStreamMgr *AK::IAkStreamMgr::m_pStreamMgr+A4CD62
+0179FBFB | 893424                          | mov dword ptr ss:[esp],esi                               | esi:protected: static class AK::IAkStreamMgr *AK::IAkStreamMgr::m_pStreamMgr+CFACE8
+0179FBFE | 8BCE                            | mov ecx,esi                                              | ecx:"7001A036F48A7EEE262467BD411A24798BABF2B5B9BBE418E1AC423B37AC9F10E647416AA91ECA6D1379", esi:protected: static class AK::IAkStreamMgr *AK::IAkStreamMgr::m_pStreamMgr+CFACE8
+0179FC00 | E8 4B36A9FF                     | call skylanders.1233250                                  | 0179FC00 | B8 01000000                     | mov eax,1                                                |
+0179FC05 | 83F8 01                         | cmp eax,1                                                | eax:protected: static class AK::IAkStreamMgr *AK::IAkStreamMgr::m_pStreamMgr+4BD26C
+0179FC08 | 9C                              | pushfd                                                   |
+0179FC09 | 68 1E310000                     | push 311E                                                |
+
+8BCEE8????????83F8019C
+
+https://neolurk.org/wiki/SecuROM
+
+
+
+6005	Similar to 13001, with the only difference being that for the code section (after final unpacking, before jumping to OEP) and a different algorithm (CRC32?).	There's no need to set INT3 in the locations being tested. For the rest of the smart guys, set a hardware read/write breakpoint in the section being tested, break on the counting algorithm, and immediately after RET, hit a trigger condition like this:
+MOV ECX,DWORD PTR DS:[EDI+ECX+0x13A]
+CMP EAX,ECX
+
+13001	The integrity of the file's PE header has been compromised.	In the vast majority of cases, the error occurs when attempting to add new functions to the import table, for example, via LordPE™ or PeTools™. SecuROM has a backup original PE header, which is compared with your patched one via XOR in 4-byte increments:
+
+XOR ECX,DWORD PTR DS:[EDX]
+NOT EAX
+XOR ECX,EDX
+CMP EAX,ECX
+MOV EAX,EDX
+
+01792623 | 8B8C0F 3A010000                 | mov ecx,dword ptr ds:[edi+ecx+13A]                       | ecx:protected: static class AK::IAkStreamMgr *AK::IAkStreamMgr::m_pStreamMgr+2AD16C, edi+ecx*1+13A:protected: static class AK::IAkStreamMgr *AK::IAkStreamMgr::m_pStreamMgr+2AD2A6
+
+Stext is the Securom Section 
+
+Securom8 was checking for any changes - reversing the patches after the last geometry check fixes it
+
+--------------------------------------------------------------------------------------------------------------------
+Disassembling virusek and neogames iphlpapi.dll for Securom 7 and 8
+
+First in DLLMain:
+
+.text:40C91099 loc_40C91099:                           ; CODE XREF: DllEntryPoint+84↑j
+.text:40C91099                 call    sub_40C93760
+.text:40C9109E                 mov     lpMem, eax
+.text:40C910A3                 test    eax, eax
+.text:40C910A5                 jz      short loc_40C91086
+.text:40C910A7                 call    sub_40C91100
+.text:40C910AC                 jmp     short loc_40C910DF
+.text:40C910AE ; ---------------------------------------------------------------------------
+.text:40C910AE
+.text:40C910AE loc_40C910AE:                           ; CODE XREF: DllEntryPoint+F↑j
+.text:40C910AE                 test    eax, eax
+.text:40C910B0                 jnz     short loc_40C910EA
+.text:40C910B2                 push    offset CriticalSection ; lpCriticalSection
+.text:40C910B7                 call    ds:EnterCriticalSection
+.text:40C910BD                 push    hModule         ; hLibModule
+.text:40C910C3                 call    ds:FreeLibrary
+.text:40C910C9                 mov     ecx, lpMem      ; lpMem
+.text:40C910CF                 call    sub_40C938C0
+.text:40C910D4                 push    offset CriticalSection ; lpCriticalSection
+.text:40C910D9                 call    ds:DeleteCriticalSection
+.text:40C910DF
+.text:40C910DF loc_40C910DF:                           ; CODE XREF: DllEntryPoint+AC↑j
+.text:40C910DF                 push    offset CriticalSection ; lpCriticalSection
+.text:40C910E4                 call    ds:LeaveCriticalSection
+
+Jump in to Sitext
+0189CB60 | 9C                              | pushfd                                                   |
+

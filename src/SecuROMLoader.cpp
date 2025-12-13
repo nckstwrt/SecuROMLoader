@@ -411,7 +411,35 @@ void SecuROMLoader(HMODULE hModule)
 		logc(FOREGROUND_RED, "You may need to disable SafeSEH in the executable using a PE Editor.\n");
 		GetKey(true);	
 	}
-	
+
+	if (status != MH_OK)
+	{
+		log("Minhook init failed!\n");
+		return;
+	}
+
+	if ((status = MH_CreateHookApi(L"kernel32", "CreateProcessA", &CreateProcessA_Hook, reinterpret_cast<LPVOID*>(&CreateProcessA_Orig))) != MH_OK)
+	{
+		log("Unable to hook CreateProcessA: %d\n", status);
+		GetKey(true);
+		return;
+	}
+
+	if (MH_CreateHookApi(L"kernel32", "CreateProcessW", &CreateProcessW_Hook, reinterpret_cast<LPVOID*>(&CreateProcessW_Orig)) != MH_OK)
+	{
+		log("Unable to hook CreateProcessW\n");
+		GetKey(true);
+		return;
+	}
+
+	if (GetFileAttributes("iphlpapi_virusek.dll") != INVALID_FILE_ATTRIBUTES)
+	{
+		logc(FOREGROUND_PINK, "virusek's iphlpapi.dll is detected!!!!!\n");
+		logc(FOREGROUND_PINK, "Load that for bypassing Securom 7 or 8. We won't do anything else!!!!\n");
+		LoadLibraryA("iphlpapi_virusek.dll");
+		return;
+	}
+
 	CDROMDriveLetter = config.GetValue("CDROMDriveLetter");
 	if (CDROMDriveLetter == NULL)
 	{
@@ -419,12 +447,6 @@ void SecuROMLoader(HMODULE hModule)
 		CDROMDriveLetter = "L";
 	}
 	logc(FOREGROUND_GREEN, "Using CDROMDriveLetter: %s\n", CDROMDriveLetter);
-
-	if (status != MH_OK)
-	{
-		log("Minhook init failed!\n");
-		return;
-	}
 
 	if (MH_CreateHookApi(L"ntdll", "NtDeviceIoControlFile", &NtDeviceIoControlFile_Hook, reinterpret_cast<LPVOID*>(&NtDeviceIoControlFile_Orig)) != MH_OK)
 	{
@@ -504,20 +526,6 @@ void SecuROMLoader(HMODULE hModule)
 	if ((status = MH_CreateHookApi(L"kernel32", "FindFirstFileA", &FindFirstFileA_Hook, reinterpret_cast<LPVOID*>(&FindFirstFileA_Orig))) != MH_OK)
 	{
 		log("Unable to hook FindFirstFileA: %d\n", status);
-		GetKey(true);
-		return;
-	}
-
-	if ((status = MH_CreateHookApi(L"kernel32", "CreateProcessA", &CreateProcessA_Hook, reinterpret_cast<LPVOID*>(&CreateProcessA_Orig))) != MH_OK)
-	{
-		log("Unable to hook CreateProcessA: %d\n", status);
-		GetKey(true);
-		return;
-	}
-
-	if (MH_CreateHookApi(L"kernel32", "CreateProcessW", &CreateProcessW_Hook, reinterpret_cast<LPVOID*>(&CreateProcessW_Orig)) != MH_OK)
-	{
-		log("Unable to hook CreateProcessW\n");
 		GetKey(true);
 		return;
 	}
