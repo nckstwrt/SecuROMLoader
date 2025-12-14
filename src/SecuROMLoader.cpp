@@ -435,8 +435,19 @@ void SecuROMLoader(HMODULE hModule)
 	if (GetFileAttributes("iphlpapi_virusek.dll") != INVALID_FILE_ATTRIBUTES)
 	{
 		logc(FOREGROUND_PINK, "virusek's iphlpapi.dll is detected!!!!!\n");
-		logc(FOREGROUND_PINK, "Load that for bypassing Securom 7 or 8. We won't do anything else!!!!\n");
+		logc(FOREGROUND_PINK, "loading that for bypassing Securom 7 or 8. We won't do anything else!!!!\n");
+		GetKey(true);
 		LoadLibraryA("iphlpapi_virusek.dll");
+		return;
+	}
+
+	if (GetFileAttributes("virusek_bypass.dll") != INVALID_FILE_ATTRIBUTES)
+	{
+		logc(FOREGROUND_PINK, "virusek's iphlpapi.dll payload (virusek_bypass.dll) is detected!!!!!\n");
+		logc(FOREGROUND_PINK, "Loading that for bypassing Securom 7 or 8. We won't do anything else!!!!\n");
+		GetKey(true);
+		HMODULE hBypass = LoadLibraryA("virusek_bypass.dll");
+		logc(FOREGROUND_PINK, "Bypass: %08X\n", (DWORD)hBypass);
 		return;
 	}
 
