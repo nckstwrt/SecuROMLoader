@@ -492,7 +492,7 @@ void SecuROMLoader(HMODULE hModule)
 		return;
 	}
 
-	if (config.GetValue("UseVirusekMethod"))
+	if (config.GetBool("UseVirusekMethod"))
 	{
 		logc(FOREGROUND_PINK, "Using built-in virusek's method to bypass SecuROM 7/8!\n");
 		if (MH_CreateHookApi(L"user32", "FindWindowA", &FindWindowA_Hook, reinterpret_cast<LPVOID*>(&FindWindowA_Orig)) != MH_OK)
