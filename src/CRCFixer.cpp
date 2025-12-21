@@ -115,70 +115,9 @@ __declspec(naked) void GeometryHook()
 	__asm ret;
 }
 
-extern DWORD CDCheckStartAddr;
-extern DWORD CDCheckEndAddr;
 
-void CRCFixer(DWORD start, DWORD end, bool removeJNE, bool autoApplyPatches)
+int CRCFix(DWORD start, DWORD end, bool removeJNE)
 {
-	logc(FOREGROUND_CYAN, "Starting CRCFixer...\n");
-
-	DWORD ExeAddr = (DWORD)GetModuleHandle(NULL);
-	auto sections = GetSections(ExeAddr);
-	std::vector<DWORD> CDCheckMatches;
-	int CDCheckOffset = 0;
-
-	if (start == -1L && end == -1L)
-	{
-		PIMAGE_SECTION_HEADER CDCheckSection = NULL;
-		for (auto& section : sections)
-		{
-			logc(FOREGROUND_CYAN, "Section: %s Addr: %08X Size: %X\n", section->Name, section->VirtualAddress + ExeAddr, section->Misc.VirtualSize);
-			if (_stricmp((char*)section->Name, ".rdata") == 0 || /*_stricmp((char*)section->Name, ".text") == 0 ||*/ _stricmp((char*)section->Name, ".data") == 0)
-				continue;
-
-			DWORD CDSectionStart = section->VirtualAddress + ExeAddr;
-			CDCheckMatches = FindAllHexString(CDSectionStart, CDSectionStart + section->Misc.VirtualSize, "83E01F3C1F"); // and eax, 1F; cmp al, 1F;
-			if (CDCheckMatches.size() >= 1)
-			{
-				CDCheckStartAddr = CDSectionStart;
-				CDCheckEndAddr = CDSectionStart + section->Misc.VirtualSize;
-				CDCheckSection = section;
-				break;
-			}
-
-			//FindAllHexString(CDSectionStart, CDSectionStart + section->Misc.VirtualSize, "83C408DD1D", "Test1");
-			//FindAllHexString(CDSectionStart, CDSectionStart + section->Misc.VirtualSize, "032424DD1D", "Test2");
-			//FindAllHexString(CDSectionStart, CDSectionStart + section->Misc.VirtualSize, "2B3C85????????5F", "Test3");
-		}
-	
-		if (CDCheckSection == NULL)
-		{
-			logc(FOREGROUND_RED, "Failed to find CD Check section!!! Searching for GTA SA style CD Check now\n");
-			
-			for (auto& section : sections)
-			{
-				DWORD CDSectionStart = section->VirtualAddress + ExeAddr;
-				CDCheckMatches = FindAllHexString(CDSectionStart, CDSectionStart + section->Misc.VirtualSize, "E8????????83E01F"); // CALL proc, and eax, 1F;
-				if (CDCheckMatches.size() >= 1)
-				{
-					CDCheckOffset = 5;
-					CDCheckSection = section;
-					break;
-				}
-			}
-
-			if (CDCheckSection == NULL)
-			{
-				logc(FOREGROUND_RED, "Failed to find GTA IV style CD Check section!!! Aborting CRC Fixer\n");
-				return;
-			}
-		}
-	
-		logc(FOREGROUND_CYAN, "CD Check Section: %s Addr: %08X Size: %X\n", CDCheckSection->Name, CDCheckSection->VirtualAddress + ExeAddr, CDCheckSection->Misc.VirtualSize);
-		start = CDCheckSection->VirtualAddress + ExeAddr;
-		end = start + CDCheckSection->Misc.VirtualSize;
-	}
-
 	int CRCCount = 0;
 	DWORD crcAddr = start;
 	while (true)
@@ -302,6 +241,75 @@ void CRCFixer(DWORD start, DWORD end, bool removeJNE, bool autoApplyPatches)
 		crcAddr += 0x13;
 		CRCCount++;
 	}
+
+	return CRCCount;
+}
+
+extern DWORD CDCheckStartAddr;
+extern DWORD CDCheckEndAddr;
+
+void CRCFixer(DWORD start, DWORD end, bool removeJNE, bool autoApplyPatches)
+{
+	logc(FOREGROUND_CYAN, "Starting CRCFixer...\n");
+
+	DWORD ExeAddr = (DWORD)GetModuleHandle(NULL);
+	auto sections = GetSections(ExeAddr);
+	std::vector<DWORD> CDCheckMatches;
+	int CDCheckOffset = 0;
+
+	if (start == -1L && end == -1L)
+	{
+		PIMAGE_SECTION_HEADER CDCheckSection = NULL;
+		for (auto& section : sections)
+		{
+			logc(FOREGROUND_CYAN, "Section: %s Addr: %08X Size: %X\n", section->Name, section->VirtualAddress + ExeAddr, section->Misc.VirtualSize);
+			if (_stricmp((char*)section->Name, ".rdata") == 0 || /*_stricmp((char*)section->Name, ".text") == 0 ||*/ _stricmp((char*)section->Name, ".data") == 0)
+				continue;
+
+			DWORD CDSectionStart = section->VirtualAddress + ExeAddr;
+			CDCheckMatches = FindAllHexString(CDSectionStart, CDSectionStart + section->Misc.VirtualSize, "83E01F3C1F"); // and eax, 1F; cmp al, 1F;
+			if (CDCheckMatches.size() >= 1)
+			{
+				CDCheckStartAddr = CDSectionStart;
+				CDCheckEndAddr = CDSectionStart + section->Misc.VirtualSize;
+				CDCheckSection = section;
+				break;
+			}
+
+			//FindAllHexString(CDSectionStart, CDSectionStart + section->Misc.VirtualSize, "83C408DD1D", "Test1");
+			//FindAllHexString(CDSectionStart, CDSectionStart + section->Misc.VirtualSize, "032424DD1D", "Test2");
+			//FindAllHexString(CDSectionStart, CDSectionStart + section->Misc.VirtualSize, "2B3C85????????5F", "Test3");
+		}
+	
+		if (CDCheckSection == NULL)
+		{
+			logc(FOREGROUND_RED, "Failed to find CD Check section!!! Searching for GTA SA style CD Check now\n");
+			
+			for (auto& section : sections)
+			{
+				DWORD CDSectionStart = section->VirtualAddress + ExeAddr;
+				CDCheckMatches = FindAllHexString(CDSectionStart, CDSectionStart + section->Misc.VirtualSize, "E8????????83E01F"); // CALL proc, and eax, 1F;
+				if (CDCheckMatches.size() >= 1)
+				{
+					CDCheckOffset = 5;
+					CDCheckSection = section;
+					break;
+				}
+			}
+
+			if (CDCheckSection == NULL)
+			{
+				logc(FOREGROUND_RED, "Failed to find GTA IV style CD Check section!!! Aborting CRC Fixer\n");
+				return;
+			}
+		}
+	
+		logc(FOREGROUND_CYAN, "CD Check Section: %s Addr: %08X Size: %X\n", CDCheckSection->Name, CDCheckSection->VirtualAddress + ExeAddr, CDCheckSection->Misc.VirtualSize);
+		start = CDCheckSection->VirtualAddress + ExeAddr;
+		end = start + CDCheckSection->Misc.VirtualSize;
+	}
+
+	int CRCCount = CRCFix(start, end, removeJNE);
 
 	if (CDCheckMatches.size() > 0)	// If we have CD Matches then we're removing SecuROM 7/8 Checks. Else let the 345Patcher fix them.
 	{

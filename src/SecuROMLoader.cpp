@@ -10,6 +10,7 @@
 #include "CRCFixer.h"
 #include "DeviceIoControlHook.h"
 #include "Compatibility.h"
+#include "VirusekMethod.h"
 #include <vector>
 
 // Tested Games:
@@ -432,6 +433,45 @@ void SecuROMLoader(HMODULE hModule)
 		return;
 	}
 
+	/*
+	// Only used to debug virusek's method
+	if (MH_CreateHookApi(L"kernel32", "VirtualQuery", &VirtualQuery_Hook, reinterpret_cast<LPVOID*>(&VirtualQuery_Orig)) != MH_OK)
+	{
+		log("Unable to hook VirtualQuery\n");
+		GetKey(true);
+		return;
+	}*/
+
+	FARPROC pCreateFileA_K32 = NULL, pCreateFileA_KBase = NULL;
+	HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
+	HMODULE hKernelBase = GetModuleHandleA("kernelbase.dll");
+
+	pCreateFileA_K32 = GetProcAddress(hKernel32, "CreateFileA");
+	if (hKernelBase)
+		pCreateFileA_KBase = GetProcAddress(hKernelBase, "CreateFileA");
+
+	if (pCreateFileA_K32 != pCreateFileA_KBase)
+	{
+		if (MH_CreateHook(pCreateFileA_K32, CreateFileA_Hook, (LPVOID*)&CreateFileA_Orig) != MH_OK)
+		{
+			log("Unable to hook CreateFileA from kernel32.dll\n");
+			return;
+		}
+		if (MH_CreateHook(pCreateFileA_KBase, CreateFileA_Hook_KBase, (LPVOID*)&CreateFileA_Orig_KBase) != MH_OK)
+		{
+			log("Unable to hook CreateFileA from kernelbase.dll\n");
+			return;
+		}
+	}
+	else
+	{
+		if (MH_CreateHook(pCreateFileA_K32, CreateFileA_Hook, (LPVOID*)&CreateFileA_Orig) != MH_OK)
+		{
+			log("Unable to hook CreateFileA from kernel32.dll\n");
+			return;
+		}
+	}
+
 	if (GetFileAttributes("iphlpapi_virusek.dll") != INVALID_FILE_ATTRIBUTES)
 	{
 		logc(FOREGROUND_PINK, "virusek's iphlpapi.dll is detected!!!!!\n");
@@ -443,11 +483,25 @@ void SecuROMLoader(HMODULE hModule)
 
 	if (GetFileAttributes("virusek_bypass.dll") != INVALID_FILE_ATTRIBUTES)
 	{
+		MH_EnableHook(MH_ALL_HOOKS);
 		logc(FOREGROUND_PINK, "virusek's iphlpapi.dll payload (virusek_bypass.dll) is detected!!!!!\n");
 		logc(FOREGROUND_PINK, "Loading that for bypassing Securom 7 or 8. We won't do anything else!!!!\n");
 		GetKey(true);
 		HMODULE hBypass = LoadLibraryA("virusek_bypass.dll");
 		logc(FOREGROUND_PINK, "Bypass: %08X\n", (DWORD)hBypass);
+		return;
+	}
+
+	if (config.GetValue("UseVirusekMethod"))
+	{
+		logc(FOREGROUND_PINK, "Using built-in virusek's method to bypass SecuROM 7/8!\n");
+		if (MH_CreateHookApi(L"user32", "FindWindowA", &FindWindowA_Hook, reinterpret_cast<LPVOID*>(&FindWindowA_Orig)) != MH_OK)
+		{
+			log("Unable to hook FindWindowA\n");
+			GetKey(true);
+			return;
+		}
+		MH_EnableHook(MH_ALL_HOOKS);
 		return;
 	}
 
@@ -488,36 +542,6 @@ void SecuROMLoader(HMODULE hModule)
 	{
 		log("Unable to hook GetVolumeInformationA\n");
 		return; 
-	}
-
-	FARPROC pCreateFileA_K32 = NULL, pCreateFileA_KBase = NULL;
-	HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
-	HMODULE hKernelBase = GetModuleHandleA("kernelbase.dll");
-
-	pCreateFileA_K32 = GetProcAddress(hKernel32, "CreateFileA");
-	if (hKernelBase)
-		pCreateFileA_KBase = GetProcAddress(hKernelBase, "CreateFileA");
-
-	if (pCreateFileA_K32 != pCreateFileA_KBase)
-	{
-		if (MH_CreateHook(pCreateFileA_K32, CreateFileA_Hook, (LPVOID*)&CreateFileA_Orig) != MH_OK)
-		{
-			log("Unable to hook CreateFileA from kernel32.dll\n");
-			return;
-		}
-		if (MH_CreateHook(pCreateFileA_KBase, CreateFileA_Hook_KBase, (LPVOID*)&CreateFileA_Orig_KBase) != MH_OK)
-		{
-			log("Unable to hook CreateFileA from kernelbase.dll\n");
-			return;
-		}
-	}
-	else
-	{
-		if (MH_CreateHook(pCreateFileA_K32, CreateFileA_Hook, (LPVOID*)&CreateFileA_Orig) != MH_OK)
-		{
-			log("Unable to hook CreateFileA from kernel32.dll\n");
-			return;
-		}
 	}
 
 	if ((status = MH_CreateHookApi(L"kernel32", "GetFileAttributesA", &GetFileAttributesA_Hook, reinterpret_cast<LPVOID*>(&GetFileAttributesA_Orig))) != MH_OK)

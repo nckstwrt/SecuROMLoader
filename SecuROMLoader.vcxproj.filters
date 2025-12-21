@@ -52,6 +52,9 @@
     <ClCompile Include="src\PiratesPatching.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\VirusekMethod.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\minhook\buffer.h">
@@ -112,6 +115,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\PiratesPatching.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\VirusekMethod.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

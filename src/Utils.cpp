@@ -363,6 +363,25 @@ std::vector<PIMAGE_SECTION_HEADER> GetSections(DWORD addr)
 	return sections;
 }
 
+DWORD GetExeSizeInMemory()
+{
+	HMODULE hExe = GetModuleHandle(NULL);
+	if (!hExe)
+		return -1L;
+
+	IMAGE_DOS_HEADER* dos = (IMAGE_DOS_HEADER*)hExe;
+	if (dos->e_magic != IMAGE_DOS_SIGNATURE)
+		return -1L;
+
+	IMAGE_NT_HEADERS* nt =
+		(IMAGE_NT_HEADERS*)((BYTE*)hExe + dos->e_lfanew);
+
+	if (nt->Signature != IMAGE_NT_SIGNATURE)
+		return -1L;
+
+	return nt->OptionalHeader.SizeOfImage;
+}
+
 BOOL WriteProtectedDWORD(DWORD Addr, DWORD Value, bool logWrite)
 {
 	BOOL bRet = FALSE;

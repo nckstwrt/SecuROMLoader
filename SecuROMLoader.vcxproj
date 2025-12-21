@@ -36,6 +36,7 @@
     <ClCompile Include="src\tiny-json.c" />
     <ClCompile Include="src\Utils.cpp" />
     <ClCompile Include="src\version.cpp" />
+    <ClCompile Include="src\VirusekMethod.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\version.def" />
@@ -61,6 +62,7 @@
     <ClInclude Include="src\Typedefs.h" />
     <ClInclude Include="src\Utils.h" />
     <ClInclude Include="src\version.h" />
+    <ClInclude Include="src\VirusekMethod.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

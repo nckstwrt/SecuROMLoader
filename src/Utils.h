@@ -21,6 +21,7 @@ BOOL GetSafeDiscVersionFromBuffer(BYTE *buffer, DWORD dwBufferSize, DWORD *pdwVe
 BOOL GetSafeDiscVersion(const char *szExeFile, DWORD *pdwVersion, DWORD *pdwSubVersion, DWORD *pdwRevision);
 PIMAGE_SECTION_HEADER GetSectionByName(DWORD addr, const char *szName);
 std::vector<PIMAGE_SECTION_HEADER> GetSections(DWORD addr);
+DWORD GetExeSizeInMemory();
 BOOL WriteProtectedDWORD(DWORD Addr, DWORD Value, bool logWrite = true);
 BOOL WriteProtectedBYTE(DWORD Addr, BYTE Value, bool logWrite = true);
 HRESULT PatchIat(HMODULE Module, PSTR ImportedModuleName, PSTR ImportedProcName, PVOID AlternateProc, PVOID *OldProc);
