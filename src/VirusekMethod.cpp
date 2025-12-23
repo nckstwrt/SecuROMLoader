@@ -3,6 +3,10 @@
 #include "minhook/MinHook.h"
 #include "VirusekMethod.h"
 #include "Utils.h"
+#include "CRCFixer.h"
+#include "Config.h"
+
+extern Config config;
 
 VirtualQuery_typedef VirtualQuery_Orig;
 FindWindowA_typedef FindWindowA_Orig;
@@ -11,6 +15,17 @@ __declspec(naked) void Ret0()
 {
 	__asm xor eax, eax
 	__asm ret
+}
+
+// This little function is an unnecessary hop but makes for a useful unchecked breakpoint when debugging
+DWORD RemapToPtr3;
+__declspec(naked) void JmpToPtr3()
+{
+	__asm 
+	{
+		push dword ptr [RemapToPtr3]
+		ret
+	}
 }
 
 DWORD CheckRegion(DWORD start, DWORD size, DWORD exeStart, DWORD exeEnd)
@@ -28,11 +43,11 @@ DWORD CheckRegion(DWORD start, DWORD size, DWORD exeStart, DWORD exeEnd)
 			DWORD ptr2Addr = i + 0x44;
 			DWORD ptr2 = *(DWORD*)&ptr[ptr2Addr];	// Map to a xor eax,eax ret
 			DWORD ptr3Addr = i + 0x2C;
-			DWORD ptr3 = *(DWORD*)&ptr[ptr3Addr];	// Function to Map to
+			RemapToPtr3 = *(DWORD*)&ptr[ptr3Addr];	// Function to Map to
 
 			if (ptr1 < exeStart || ptr1 > exeEnd ||
 				ptr2 < exeStart || ptr2 > exeEnd ||
-				ptr3 < exeStart || ptr3 > exeEnd)
+				RemapToPtr3 < exeStart || RemapToPtr3 > exeEnd)
 			{
 				//logc(FOREGROUND_YELLOW, "CheckRegion: Failed pointer checks at %08X (Ptr1: %08X Ptr2: %08X Ptr3: %08X)\n", start + i, ptr1, ptr2, ptr3);
 				continue;
@@ -44,9 +59,9 @@ DWORD CheckRegion(DWORD start, DWORD size, DWORD exeStart, DWORD exeEnd)
 				ptr[ptr3Addr - 1] != 0 || ptr[ptr3Addr + 4] != 0x4)
 				continue;
 
-			logc(FOREGROUND_GREEN, "CheckRegion: Found SecuROM region to patch at %08X  (Ptr1: %08X Ptr2: %08X Ptr3: %08X)\n", start + i, ptr1, ptr2, ptr3);
+			logc(FOREGROUND_GREEN, "CheckRegion: Found SecuROM region to patch at %08X  (Ptr1: %08X Ptr2: %08X Ptr3: %08X)\n", start + i, ptr1, ptr2, RemapToPtr3);
 
-			*(DWORD*)&ptr[ptr1Addr] = ptr3;
+			*(DWORD*)&ptr[ptr1Addr] = (DWORD)&JmpToPtr3;
 			*(DWORD*)&ptr[ptr2Addr] = (DWORD)&Ret0;
 
 			GetKey(true);
@@ -63,7 +78,7 @@ HWND WINAPI FindWindowA_Hook(LPCSTR lpClassName, LPCSTR lpWindowName)
 
 	DWORD exeStart = (DWORD)GetModuleHandle(NULL);
 	DWORD exeEnd = exeStart + GetExeSizeInMemory();
-
+	
 	MEMORY_BASIC_INFORMATION mbi;
 	DWORD AddrFound = -1L;
 	DWORD ret = VirtualQuery((void*)0, &mbi, sizeof(mbi));
@@ -93,26 +108,26 @@ HWND WINAPI FindWindowA_Hook(LPCSTR lpClassName, LPCSTR lpWindowName)
 			logc(FOREGROUND_BROWN, "FindWindowA_Hook: Found SecuROM region at %08X\n", AddrFound);
 		}
 	}
-	/*
+	
 	// Skylanders specific testing!
+	/*
 	CRCFixer(-1L, -1L, true, false);
-	WritePatchBYTE(0x013EEE76, 0xB0);
+	WritePatchBYTE(0x013EEE76, 0xB0);		// mov al, 0
 	WritePatchBYTE(0x013EEE77, 0x00);
 	WritePatchBYTE(0x013EEE78, 0x90);
-	WritePatchBYTE(0x012667F1, 0x39);
+	WritePatchBYTE(0x012667F1, 0x39);		// cmp eax, eax
 	WritePatchBYTE(0x012667F2, 0xC0);
 	WritePatchDWORD(0x0159A910, 0x90C3C031); // xor eax,eax ret // Patching this stops paul.dll loading
-	WritePatchDWORD(0x01416B80, 0x080A5BE9);
+	WritePatchDWORD(0x01416B80, 0x080A5BE9); // jmp to the good function from the bad one
 	WritePatchBYTE(0x01416B84, 0x00);
 	WritePatchBYTE(0x01416B85, 0x90);
 	WritePatchBYTE(0x01416B86, 0x90);
-
 	WritePatchBYTE(0x00EA1F9A, 0x39);		// 6005 patch cmp eax, eax
 	WritePatchBYTE(0x00EA1F9B, 0xC0);
 	ApplyPatches();
 	GetKey(true);
 	*/
-
+	RestrictProcessors(config.GetInt("CPUCount", -1));
 	return FindWindowA_Orig(lpClassName, lpWindowName);
 }
 

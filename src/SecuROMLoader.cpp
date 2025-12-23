@@ -501,8 +501,8 @@ void SecuROMLoader(HMODULE hModule)
 			GetKey(true);
 			return;
 		}
-		MH_EnableHook(MH_ALL_HOOKS);
-		return;
+		//MH_EnableHook(MH_ALL_HOOKS);
+		//return;
 	}
 
 	CDROMDriveLetter = config.GetValue("CDROMDriveLetter");
@@ -570,17 +570,21 @@ void SecuROMLoader(HMODULE hModule)
 		log("Unable to hook LoadLibraryA\n");
 		return;
 	}
-
-	if (MH_CreateHookApi(L"ntdll", "KiUserExceptionDispatcher", &KiUserExceptionDispatcher_Hook, reinterpret_cast<LPVOID*>(&KiUserExceptionDispatcher_Orig)) != MH_OK)
+	
+	// If using the virusek method, then no need to hook these and try and bypass the cd checks
+	if (!config.GetBool("UseVirusekMethod"))
 	{
-		log("Unable to hook KiUserExceptionDispatcher\n");
-		return;
-	}
+		if (MH_CreateHookApi(L"ntdll", "KiUserExceptionDispatcher", &KiUserExceptionDispatcher_Hook, reinterpret_cast<LPVOID*>(&KiUserExceptionDispatcher_Orig)) != MH_OK)
+		{
+			log("Unable to hook KiUserExceptionDispatcher\n");
+			return;
+		}
 
-	if (MH_CreateHookApi(L"ntdll", "NtContinue", &NtContinue_Hook, reinterpret_cast<LPVOID*>(&NtContinue_Orig)) != MH_OK)
-	{
-		log("Unable to hook NtContinue\n");
-		return;
+		if (MH_CreateHookApi(L"ntdll", "NtContinue", &NtContinue_Hook, reinterpret_cast<LPVOID*>(&NtContinue_Orig)) != MH_OK)
+		{
+			log("Unable to hook NtContinue\n");
+			return;
+		}
 	}
 
 	if (MH_EnableHook(MH_ALL_HOOKS) != MH_OK)
