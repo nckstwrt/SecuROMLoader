@@ -354,7 +354,8 @@ void CRCFixer(DWORD start, DWORD end, bool removeJNE, bool autoApplyPatches)
 					if (checkValue == 0x7C0)
 					{
 						logc(FOREGROUND_ORANGE, "Old +7C0 Check Verified at: %08X\n", match);
-						WritePatchBYTE(match + 14, 0x0); // and ecx, 0   - change to compare with 0
+						WritePatchBYTE(match + 14, 0x0); // and ecx, 0   - change to and with 0
+						WritePatchBYTE(match + 13, 0xf9); // cmp ecx, 0   - change to compare with 0 // Test!
 					}
 				}
 			}

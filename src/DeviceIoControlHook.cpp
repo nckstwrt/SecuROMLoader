@@ -20,6 +20,7 @@ void PrintCdbCommand(const BYTE* cdb, UCHAR cdbLen);
 
 BYTE *TOC = hexstring("0012010100140100000000000014AA000028FDD0");
 int TOCCount = 0;
+bool flip7C0 = true;
 
 NTSTATUS NTAPI NtDeviceIoControlFile_Hook(HANDLE FileHandle, HANDLE Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, ULONG IoControlCode, PVOID InputBuffer, ULONG InputBufferLength, PVOID OutputBuffer, ULONG OutputBufferLength)
 {
@@ -162,8 +163,9 @@ NTSTATUS NTAPI NtDeviceIoControlFile_Hook(HANDLE FileHandle, HANDLE Event, PIO_A
 						}
 						else
 						{
-							logc(FOREGROUND_GREEN, "Patching for PVD for SecuROM 7+ 0908 \n");
-							memcpy(&pBuf[0x7C0], hexstring("0908"), 2); //memcpy(&pBuf[0x7C0], hexstring("0908"), 2);   // May need tweaking - but 0908 did not work for Football Manager 2008 - but does work for GTA SA
+							logc(FOREGROUND_GREEN, "Patching for PVD for SecuROM 7+ %s \n", flip7C0 ? "0908" : "0000");
+							memcpy(&pBuf[0x7C0], hexstring(flip7C0 ? "0908" : "0000"), 2); //memcpy(&pBuf[0x7C0], hexstring("0908"), 2);   // May need tweaking - but 0908 did not work for Football Manager 2008 - but does work for GTA SA
+							flip7C0 = !flip7C0;
 						}
 						memcpy(&pBuf[0x7C8], hexstring("168A2855"), 4);
 						memcpy(&pBuf[0x7D8], hexstring("0CEB936601"), 5);
