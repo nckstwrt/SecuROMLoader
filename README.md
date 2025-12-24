@@ -44,6 +44,9 @@ Find out more here: [Example Config Files](https://github.com/nckstwrt/SecuROMLo
 * Spellforce - The Order of Dawn v1.11 - v5.00.03
 * Spellforce - The Breath Of Winter - v5.03.04
 
+## virusek's SecuROM 7/8 Methodology
+virusek released a generic SecuROM 7 and 8 loader ([Original cs.rin.ru post](https://cs.rin.ru/forum/viewtopic.php?p=912641#p912641)). SecuROMLoader now has this methodology built-in which can be turned on from utilising version.json (See [Example Configs](https://github.com/nckstwrt/SecuROMLoader/tree/master/Example%20Config%20Files))
+
 ## Background
 After writing  [SafeDiscLoader2](https://github.com/nckstwrt/SafeDiscLoader2) I was interested in creating the same for SecuROM as these were the two big CD/DVD protections before Internet Activation took over (as it did even for SecuROM 8). ELF described how you can bypass the protection in SecuROM 7 so I wanted to implement a generic way of doing the same for every version I could find.
 
