@@ -39,3 +39,10 @@ Here Vice City also checks some files off the CD. So you can map any files being
 }
 ```
 
+## Can use the built-in virusek's Securom 7 and 8 methodology:
+```json
+{
+  "UseVirusekMethod": true,
+}
+```
+
