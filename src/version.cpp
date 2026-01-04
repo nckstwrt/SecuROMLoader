@@ -1,5 +1,6 @@
 #include "version.h"
 #include <filesystem>
+#include "NString.h"
 
 HMODULE version_dll;
 

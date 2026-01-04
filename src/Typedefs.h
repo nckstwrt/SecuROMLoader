@@ -18,3 +18,4 @@ typedef void(WINAPI* KiUserExceptionDispatcher_typedef)(PEXCEPTION_RECORD Except
 typedef NTSTATUS(NTAPI* NtContinue_typedef)(PCONTEXT ThreadContext, BOOLEAN RaiseAlert);
 typedef SIZE_T(WINAPI* VirtualQuery_typedef)(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength);
 typedef HWND(WINAPI* FindWindowA_typedef)(LPCSTR lpClassName, LPCSTR lpWindowName);
+typedef HANDLE(WINAPI* OpenFileMappingW_typedef)(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName);

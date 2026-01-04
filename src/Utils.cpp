@@ -628,7 +628,8 @@ uintptr_t GetBaseAddress()
 
 void CreateConsole()
 {
-	AllocConsole();
+	if (!AttachConsole(ATTACH_PARENT_PROCESS))
+		AllocConsole();
 
 	FILE* fDummy;
 	freopen_s(&fDummy, "CONIN$", "r", stdin);

@@ -312,6 +312,12 @@ NTSTATUS NTAPI NtDeviceIoControlFile_Hook(HANDLE FileHandle, HANDLE Event, PIO_A
 	}
 	else
 	{
+		if (IoControlCode == 0x22E81F)
+		{
+			logc(FOREGROUND_CYAN, "IOCTL %X (Handle: %X) - TAGES\n", IoControlCode, FileHandle);
+			GetKey(true);
+		}
+
 		// Pass to original function
 		NTSTATUS ret = NtDeviceIoControlFile_Orig(FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, IoControlCode, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength);
 		if (IoControlCode != 0x500016)

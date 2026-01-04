@@ -41,6 +41,7 @@ CreateProcessW_typedef CreateProcessW_Orig;
 LoadLibraryA_typedef LoadLibraryA_Orig;
 KiUserExceptionDispatcher_typedef KiUserExceptionDispatcher_Orig;
 NtContinue_typedef NtContinue_Orig;
+OpenFileMappingW_typedef OpenFileMappingW_Orig;
 
 HMODULE hOurModule;
 Config config;
@@ -51,6 +52,28 @@ const char* CDROMDriveLetter = NULL;
 
 DWORD CDCheckStartAddr = 0;
 DWORD CDCheckEndAddr = 0;
+
+HANDLE WINAPI OpenFileMappingW_Hook(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
+{
+	logc(FOREGROUND_YELLOW, "OpenFileMappingW Hook - lpName: %ls\n", lpName ? lpName : L"!NULL!");
+	HANDLE hHandle = OpenFileMappingW_Orig(dwDesiredAccess, bInheritHandle, lpName);
+	if (lpName)
+	{
+		NString name = lpName;
+		if (name.Contains("-=[SMS_"))
+		{
+			logc(FOREGROUND_YELLOW, "Detected SecuROM SMS file mapping name!\n");
+			if (hHandle == NULL)
+			{
+				logc(FOREGROUND_YELLOW, "Creating fake SMS file mapping for name: %ls\n", lpName);
+				hHandle = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 1723, name);
+				MapViewOfFile(hHandle, FILE_MAP_ALL_ACCESS, 0, 0, 1723);
+			}
+		}
+	}
+	logc(FOREGROUND_YELLOW, "OpenFileMappingW: Handle: %08X\n", hHandle);
+	return hHandle;
+}
 
 // HACK: So SecuROM uses IsBadReadPtr and tries to check lots of memory - but eventually it crashes if DgVoodoo is used in Scarface (unsure why).
 // Make it always return BAD when called from the CD Check section.
@@ -275,7 +298,7 @@ BOOL WINAPI CreateProcessA_Hook(LPCSTR lpApplicationName, LPSTR lpCommandLine, L
 
 BOOL WINAPI CreateProcessW_Hook(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
-	log("CreateProcessW Hook: %ls\n", lpApplicationName);
+	log("CreateProcessW Hook: %ls (CommandLine: %ls)\n", (lpApplicationName == NULL) ? L"" : lpApplicationName, (lpCommandLine == NULL) ? L"" : lpCommandLine);
 
 	const DWORD isCreateSuspended = dwCreationFlags & CREATE_SUSPENDED;
 	if (!isCreateSuspended) dwCreationFlags |= CREATE_SUSPENDED;
@@ -293,6 +316,14 @@ BOOL WINAPI CreateProcessW_Hook(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 HMODULE WINAPI LoadLibraryA_Hook(LPCSTR lpLibFileName)
 {
 	static DWORD TableClass = 0;
+
+	/*
+	NString dllName = lpLibFileName ? NString(lpLibFileName).ToLower() : NString("");
+	if (dllName.Contains("version.dll"))
+	{
+		dllName = "version_orig.dll";
+		lpLibFileName = dllName;
+	}*/
 
 	HMODULE ret = LoadLibraryA_Orig(lpLibFileName);
 
@@ -433,6 +464,13 @@ void SecuROMLoader(HMODULE hModule)
 		return;
 	}
 
+	if (MH_CreateHookApi(L"kernel32", "OpenFileMappingW", &OpenFileMappingW_Hook, reinterpret_cast<LPVOID*>(&OpenFileMappingW_Orig)) != MH_OK)
+	{
+		log("Unable to hook OpenFileMappingW\n");
+		GetKey(true);
+		return;
+	}
+	
 	/*
 	// Only used to debug virusek's method
 	if (MH_CreateHookApi(L"kernel32", "VirtualQuery", &VirtualQuery_Hook, reinterpret_cast<LPVOID*>(&VirtualQuery_Orig)) != MH_OK)
