@@ -71,14 +71,11 @@ DWORD CheckRegion(DWORD start, DWORD size, DWORD exeStart, DWORD exeEnd)
 	return -1L;
 }
 
-HWND WINAPI FindWindowA_Hook(LPCSTR lpClassName, LPCSTR lpWindowName)
+void RunVirusekMethod()
 {
-	MH_STATUS status = MH_DisableHook(&FindWindowA);
-	logc(FOREGROUND_BROWN, "FindWindowA_Hook: lpClassName: %s lpWindowName: %s %08X\n", lpClassName ? lpClassName : "NULL", lpWindowName ? lpWindowName : "NULL", status);
-
 	DWORD exeStart = (DWORD)GetModuleHandle(NULL);
 	DWORD exeEnd = exeStart + GetExeSizeInMemory();
-	
+
 	MEMORY_BASIC_INFORMATION mbi;
 	DWORD AddrFound = -1L;
 	DWORD ret = VirtualQuery((void*)0, &mbi, sizeof(mbi));
@@ -108,6 +105,14 @@ HWND WINAPI FindWindowA_Hook(LPCSTR lpClassName, LPCSTR lpWindowName)
 			logc(FOREGROUND_BROWN, "FindWindowA_Hook: Found SecuROM region at %08X\n", AddrFound);
 		}
 	}
+}
+
+HWND WINAPI FindWindowA_Hook(LPCSTR lpClassName, LPCSTR lpWindowName)
+{
+	MH_STATUS status = MH_DisableHook(&FindWindowA);
+	logc(FOREGROUND_BROWN, "FindWindowA_Hook: lpClassName: %s lpWindowName: %s %08X\n", lpClassName ? lpClassName : "NULL", lpWindowName ? lpWindowName : "NULL", status);
+
+	RunVirusekMethod();
 	
 	// Skylanders specific testing!
 	/*
