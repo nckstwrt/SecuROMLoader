@@ -141,12 +141,14 @@ void log(const char* fmt, ...)
 		va_end(va);
 		fflush(log_file);
 	}
+#ifndef __GNUC__
 	if (stdout)
 	{
 		va_start(va, fmt);
 		vfprintf(stdout, fmt, va);
 		va_end(va);
 	}
+#endif
 	LeaveCriticalSection(&log_critical_section);
 }
 

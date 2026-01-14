@@ -4,7 +4,7 @@
 #include "NString.h"
 #include "Compatibility.h"
 #include "minhook/MinHook.h"
-#include <gl/GL.h>
+#include <GL/gl.h>
 #include <vector>
 
 extern Config config;

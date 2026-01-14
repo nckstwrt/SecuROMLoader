@@ -7,30 +7,39 @@
 #include <ntddcdvd.h>
 #include <ntdddisk.h>
 
+
 static const std::map<DWORD, std::string> DeviceIoControlMap = {
     // --- CDROM IOCTLs ---
     { IOCTL_CDROM_CHECK_VERIFY,                 "IOCTL_CDROM_CHECK_VERIFY" },
     { IOCTL_CDROM_FIND_NEW_DEVICES,             "IOCTL_CDROM_FIND_NEW_DEVICES" },
     { IOCTL_CDROM_GET_CONFIGURATION,            "IOCTL_CDROM_GET_CONFIGURATION" },
+#ifndef __GNUC__
     { OBSOLETE_IOCTL_CDROM_GET_CONTROL,                  "IOCTL_CDROM_GET_CONTROL" },
+#endif
     { IOCTL_CDROM_GET_DRIVE_GEOMETRY,           "IOCTL_CDROM_GET_DRIVE_GEOMETRY" },
     { IOCTL_CDROM_GET_DRIVE_GEOMETRY_EX,        "IOCTL_CDROM_GET_DRIVE_GEOMETRY_EX" },
     { IOCTL_CDROM_GET_LAST_SESSION,             "IOCTL_CDROM_GET_LAST_SESSION" },
 //    { IOCTL_CDROM_GET_VOLUME_PARTITION_INFO,    "IOCTL_CDROM_GET_VOLUME_PARTITION_INFO" },
+#ifndef __GNUC__
     { IOCTL_CDROM_MEDIA_REMOVAL,                "IOCTL_CDROM_MEDIA_REMOVAL" },
+#endif
     { IOCTL_CDROM_READ_Q_CHANNEL,               "IOCTL_CDROM_READ_Q_CHANNEL" },
     { IOCTL_CDROM_RAW_READ,                     "IOCTL_CDROM_RAW_READ" },
     { IOCTL_CDROM_READ_TOC,                     "IOCTL_CDROM_READ_TOC" },
     { IOCTL_CDROM_READ_TOC_EX,                  "IOCTL_CDROM_READ_TOC_EX" },
+#ifndef __GNUC__
     { IOCTL_CDROM_RESERVE,                      "IOCTL_CDROM_RESERVE" },
     { IOCTL_CDROM_RELEASE,                      "IOCTL_CDROM_RELEASE" },
     { IOCTL_CDROM_SEND_OPC_INFORMATION,         "IOCTL_CDROM_SEND_OPC_INFORMATION" },
+#endif
 //    { IOCTL_CDROM_SET_VOLUME_PARTITION_INFO,    "IOCTL_CDROM_SET_VOLUME_PARTITION_INFO" },
     { IOCTL_CDROM_SET_SPEED,                    "IOCTL_CDROM_SET_SPEED" },
     { IOCTL_CDROM_SIMBAD,                       "IOCTL_CDROM_SIMBAD" },
     { IOCTL_CDROM_STOP_AUDIO,                   "IOCTL_CDROM_STOP_AUDIO" },
     { IOCTL_CDROM_TRACK_ISRC,                   "IOCTL_CDROM_TRACK_ISRC" },
+#ifndef __GNUC__
     { IOCTL_CDROM_UNLOAD_DRIVER,                "IOCTL_CDROM_UNLOAD_DRIVER" },
+#endif
 
     // --- DVD IOCTLs ---
     { IOCTL_DVD_START_SESSION,                  "IOCTL_DVD_START_SESSION" },
@@ -73,5 +82,7 @@ static const std::map<DWORD, std::string> DeviceIoControlMap = {
     { IOCTL_SCSI_GET_ADDRESS,                   "IOCTL_SCSI_GET_ADDRESS" },
     { IOCTL_SCSI_GET_CAPABILITIES,              "IOCTL_SCSI_GET_CAPABILITIES" },
     { IOCTL_SCSI_MINIPORT,                      "IOCTL_SCSI_MINIPORT" },
+#ifndef __GNUC__
     { IOCTL_SCSI_MINIPORT_NVCACHE,              "IOCTL_SCSI_MINIPORT_NVCACHE" }
+#endif
 };

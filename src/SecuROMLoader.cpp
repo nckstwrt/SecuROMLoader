@@ -12,7 +12,6 @@
 #include "Compatibility.h"
 #include "VirusekMethod.h"
 #include <vector>
-
 // Tested Games:
 // Crysis - 07.34.0014
 // Command and Conquer 3 (v1.9) - 07.33.0017
@@ -79,7 +78,12 @@ HANDLE WINAPI OpenFileMappingW_Hook(DWORD dwDesiredAccess, BOOL bInheritHandle, 
 // Make it always return BAD when called from the CD Check section.
 BOOL WINAPI IsBadReadPtr_Hook(CONST VOID* lp, UINT_PTR ucb)
 {
-	DWORD ret = (DWORD)_ReturnAddress();
+	DWORD ret;
+#ifdef __GNUC__
+	ret = __builtin_return_address(0);
+#else
+	ret = (DWORD)_ReturnAddress();
+#endif
 	if (CDCheckStartAddr != 0 && ret >= CDCheckStartAddr && ret <= CDCheckEndAddr)
 	{
 		//logc(FOREGROUND_YELLOW, "IsBadReadPtr_Hook called from CD Check area! Return Address: %08X lp: %08X ucb: %08X\n", ret, lp ? (DWORD)lp : 0, (DWORD)ucb);
@@ -371,6 +375,17 @@ void __declspec(naked) WINAPI KiUserExceptionDispatcher_Hook(PEXCEPTION_RECORD E
 {
 	// C000001D STATUS_ILLEGAL_INSTRUCTION
 	// 80000004 STATUS_SINGLE_STEP
+#ifdef __GNUC__
+	__asm volatile(
+		"MOV EAX, [ESP + 4]                               \n\t"
+		"MOV ECX, [ESP]                                   \n\t"
+		"PUSH EAX                                         \n\t"
+		"PUSH ECX                                         \n\t"
+		"CALL (%0)                                        \n\t"
+		"jmp (%1)                                         \n\t"
+		:: "i"(KiUserExceptionDispatcher_RealHook), "m"(KiUserExceptionDispatcher_Orig)
+	);
+#else
 	__asm
 	{
 		MOV EAX, [ESP + 4]
@@ -380,6 +395,7 @@ void __declspec(naked) WINAPI KiUserExceptionDispatcher_Hook(PEXCEPTION_RECORD E
 		CALL KiUserExceptionDispatcher_RealHook
 		jmp KiUserExceptionDispatcher_Orig
 	}
+#endif
 }
 
 NTSTATUS WINAPI NtContinue_Hook(PCONTEXT Context, BOOLEAN RaiseAlert)
@@ -633,4 +649,3 @@ void SecuROMLoader(HMODULE hModule)
 
 	log("Hooks Complete!\n");
 }
-
