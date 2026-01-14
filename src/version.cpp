@@ -4,7 +4,11 @@
 
 HMODULE version_dll;
 
+#ifdef __GNUC__
+#define WRAPPER_FUNC(name) o##name = GetProcAddress(version_dll, #name)
+#else
 #define WRAPPER_FUNC(name) o##name = GetProcAddress(version_dll, ###name)
+#endif
 
 #ifdef _M_AMD64
 #pragma warning (disable: 4081)
@@ -18,6 +22,17 @@ HMODULE version_dll;
         o##name(); \
     }
 #else
+#if __GNUC__
+#define WRAPPER_GENFUNC(name) \
+	extern "C" { \
+		FARPROC o##name; \
+		__declspec(naked) void _##name() \
+		{ \
+			__asm volatile("jmp [%0]\n\t" :: "m"(o##name)); \
+			__builtin_unreachable(); \
+		} \
+	}
+#else
 #define WRAPPER_GENFUNC(name) \
 	FARPROC o##name; \
 	__declspec(naked) void _##name() \
@@ -25,7 +40,7 @@ HMODULE version_dll;
 		__asm jmp[o##name] \
 	}
 #endif
-
+#endif
 WRAPPER_GENFUNC(GetFileVersionInfoA);
 WRAPPER_GENFUNC(GetFileVersionInfoByHandle);
 WRAPPER_GENFUNC(GetFileVersionInfoExW);
@@ -49,7 +64,6 @@ void load_version() {
 	GetSystemDirectoryA(systemPath, MAX_PATH);
 	strcat_s(systemPath, "\\version.dll");
 	version_dll = LoadLibraryA(systemPath);	
-
 	if (!version_dll) return;
 	
 	WRAPPER_FUNC(GetFileVersionInfoA);

@@ -1,3 +1,3 @@
 #pragma once
-#include <Windows.h>
+#include <windows.h>
 bool PiratesPatching(DWORD CDCheckSectionStart, DWORD CDCheckSectionEnd);

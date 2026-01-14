@@ -1,4 +1,4 @@
-#include <Windows.h>
+#include <windows.h>
 #include "Utils.h"
 #include "NString.h"
 #include "CRCFixer.h"
@@ -78,42 +78,140 @@ void ReversePatches()
 	}
 }
 
+
+
 int GeometryCheckCount = 0;
 bool GeometryCheckOneToZero = false;
-__declspec(naked) void GeometryHook()
+
+#if 1
+// new GeometryHook
+#ifdef __GNUC__
+void __attribute__((cdecl)) 	// calling convention to access registers on the stack
+#else
+void _cdecl
+#endif
+GeometryHook_inner(int32_t edl, int32_t esi, int32_t ebp, int32_t esp,
+                   int32_t ebx, int32_t edx, int32_t ecx, int32_t eax)
 {
-	__asm pushad;
+	typedef union { int32_t ex; union { int16_t x; struct { int8_t l, h; }; }; } x86reg;
+	x86reg* eax_p = (x86reg*)&eax;
 	logc(FOREGROUND_GREEN, "Geometry Hook Called: %d\n", GeometryCheckCount);
-	__asm popad;
 	if (GeometryCheckCount == 0 || (GeometryCheckOneToZero && GeometryCheckCount == 1))
 	{
+		GeometryCheckCount++;
+		eax_p->h = 0;
+	}
+	else
+	{
+		GeometryCheckCount++;
+		eax_p->h = 1;
+	}
+	if (GeometryCheckCount == 4)		// Securom 8 seems to do 4 geometry checks and checks for changes?
+	{
+		logc(FOREGROUND_ORANGE, "Reversing CRC Fixer patches now...\n");
+		ReversePatches();
+		GetKey(true);
+		int32_t* ret_addr_p = (int32_t*)esp; // esp == pointer to return addr
+		*ret_addr_p += 3;	// jump back to the test ah,5
+	}
+}
+
+
+__declspec(naked) void GeometryHook()
+{
+#ifdef __GNUC__
+	__asm volatile("pushad                       \n\t"
+	               "call %0                      \n\t"
+	               "popad                        \n\t"
+	               "ret                          \n\t"
+	               ::"i"(GeometryHook_inner)
+	);
+	__builtin_unreachable();
+#else
+	__asm pushad;
+	__asm call GeometryHook_inner;
+	__asm popad;
+	__asm ret;
+#endif
+} // end new GeometryHook
+
+#else
+
+// old GeometryHook
+__declspec(naked) void GeometryHook()
+{
+#ifdef __GNUC__
+	__asm volatile("pushad             \n\t");
+#else
+	__asm pushad;
+#endif
+	logc(FOREGROUND_GREEN, "Geometry Hook Called: %d\n", GeometryCheckCount);
+#ifdef __GNUC__
+	__asm volatile("popad              \n\t");
+#else
+	__asm popad;
+#endif
+	if (GeometryCheckCount == 0 || (GeometryCheckOneToZero && GeometryCheckCount == 1))
+	{
+#ifdef __GNUC__
+		__asm volatile("incd [%0]                         \n\t"
+		               "mov ah, 0                         \n\t"
+		               //"ret                               \n\t"
+		               :"=m"(GeometryCheckCount)
+		               :"m"(GeometryCheckCount)
+		);
+#else
 		__asm 
 		{
 			inc [GeometryCheckCount]
 			mov ah, 0
 			//ret
 		}
+#endif
 	}
 	else
 	{
+#ifdef __GNUC__
+		static_assert(sizeof(GeometryCheckCount)==4, "check size of inc asm cmd");
+		__asm volatile("incd [%0]                          \n\t"
+		               "mov ah, 1                          \n\t"
+		               //"ret                                \n\t"
+			   :"=m"(GeometryCheckCount):
+			   "m"(GeometryCheckCount));
+#else
 		__asm
 		{
 			inc [GeometryCheckCount]
 			mov ah, 1
 			//ret
 		}
+#endif
 	}
 	if (GeometryCheckCount == 4)		// Securom 8 seems to do 4 geometry checks and checks for changes?
 	{
+#ifdef __GNUC__
+		__asm volatile("pushad              \n\t");
+#else
 		__asm pushad;
+#endif
 		logc(FOREGROUND_ORANGE, "Reversing CRC Fixer patches now...\n");
 		ReversePatches();
 		GetKey(true);
+#ifdef __GNUC__
+		__asm volatile("popad               \n\t"
+	                   "addd [esp], 3       \n\t");
+#else
 		__asm popad;
 		__asm add dword ptr [esp], 3  // jump back to the test ah,5
+#endif
 	}
+#ifdef __GNUC__
+	__asm volatile("ret                    \n\t");
+#else
 	__asm ret;
+#endif
 }
+#endif // end old GeometryHook
 
 
 int CRCFix(DWORD start, DWORD end, bool removeJNE)

@@ -1,5 +1,5 @@
 #pragma once
-#include <Windows.h>
+#include <windows.h>
 #include "Utils.h"
 #include "tiny-json.h"
 #include <tuple> 

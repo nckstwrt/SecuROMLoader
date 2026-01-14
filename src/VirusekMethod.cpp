@@ -13,19 +13,31 @@ FindWindowA_typedef FindWindowA_Orig;
 
 __declspec(naked) void Ret0()
 {
+#ifdef __GNUC__
+	__asm volatile("xor eax, eax            \n\t"
+	               "ret                     \n\t");
+#else
 	__asm xor eax, eax
 	__asm ret
+#endif
 }
 
 // This little function is an unnecessary hop but makes for a useful unchecked breakpoint when debugging
 DWORD RemapToPtr3;
 __declspec(naked) void JmpToPtr3()
 {
+#ifdef __GNUC__
+	__asm volatile("push (%0)                   \n\t"
+	               "ret                         \n\t"
+	               ::"m"(RemapToPtr3));
+	__builtin_unreachable();
+#else
 	__asm 
 	{
 		push dword ptr [RemapToPtr3]
 		ret
 	}
+#endif
 }
 
 DWORD CheckRegion(DWORD start, DWORD size, DWORD exeStart, DWORD exeEnd)
@@ -156,4 +168,3 @@ SIZE_T WINAPI VirtualQuery_Hook(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpB
 		logc(FOREGROUND_RED, "VirtualQuery_Hook: Unexpected dwLength: %d\n", dwLength);
 	return ret;
 }
-

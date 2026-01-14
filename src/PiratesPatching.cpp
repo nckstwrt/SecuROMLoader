@@ -1,4 +1,4 @@
-#include <Windows.h>
+#include <windows.h>
 #include "CRCFixer.h"
 #include "Utils.h"
 #include "Compatibility.h"
