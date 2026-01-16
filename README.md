@@ -9,7 +9,7 @@ SecuROMLoader is primarily just "version.dll". For any newer game you can just p
 
 ## Configuration
 SecuROMLoader can be configured to bypass additional CD/DVD checks and log lots of debug information.  
-Find out more here: [Example Config Files](https://github.com/nckstwrt/SecuROMLoader/tree/main/Example%20Config%20Files)
+Find out more here: [Example Config Files](https://github.com/nckstwrt/SecuROMLoader/Example%20Config%20Files)
 
 ## Credits
 * ELF_7719116 - The mastermind behind unveiling SecuROM and describing the technique used to NoCD SecuROM 7 (as described in TIBERIUMNUY_REVERSING__FULL_PUBLIC_VERSION_1.3.pdf)
